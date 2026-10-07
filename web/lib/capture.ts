@@ -71,12 +71,32 @@ export async function thumbnailPng(src: HTMLCanvasElement): Promise<Uint8Array> 
   throw new Error("could not fit the thumbnail under the size limit");
 }
 
-/** Opens the rear camera in a <video> element. Returns a stop function. */
-export async function startCamera(video: HTMLVideoElement): Promise<() => void> {
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } },
-    audio: false,
-  });
+/** Why a camera cannot start, in words a builder can act on. */
+export function cameraProblem(e: unknown): string {
+  if (typeof window !== "undefined" && !window.isSecureContext)
+    return "Browsers only allow the camera on a secure (https) page. Open the site over https.";
+  if (!navigator.mediaDevices?.getUserMedia) return "This browser has no camera access. Try Chrome, Safari or Firefox.";
+  const name = (e as { name?: string })?.name;
+  if (name === "NotAllowedError") return "Camera permission was refused. Allow the camera for this site in the browser's address bar, then try again.";
+  if (name === "NotFoundError" || name === "OverconstrainedError") return "No camera was found on this device.";
+  if (name === "NotReadableError") return "Another app is using the camera. Close it and try again.";
+  return e instanceof Error ? e.message : String(e);
+}
+
+/** Opens a camera in a <video> element (rear by default, or "user" for the front one). Returns a stop function. */
+export async function startCamera(video: HTMLVideoElement, facing: "environment" | "user" = "environment"): Promise<() => void> {
+  if (!navigator.mediaDevices?.getUserMedia) throw new Error(cameraProblem(null));
+  let stream: MediaStream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: facing }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+      audio: false,
+    });
+  } catch (e) {
+    // some desktops reject the size hints; retry with any camera
+    if ((e as { name?: string })?.name === "OverconstrainedError") stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    else throw new Error(cameraProblem(e));
+  }
   video.srcObject = stream;
   await video.play();
   return () => stream.getTracks().forEach((t) => t.stop());

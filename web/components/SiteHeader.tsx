@@ -7,6 +7,7 @@ import { Github, Logo } from "./icons.tsx";
 const LINKS = [
   { href: "/payer", label: "Payer" },
   { href: "/builder", label: "Builder" },
+  { href: "/camera", label: "Camera" },
 ];
 
 export function SiteHeader() {
