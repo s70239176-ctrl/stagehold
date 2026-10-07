@@ -1,0 +1,39 @@
+# dependencies and build output
+node_modules/
+.next/
+
+# local tooling, scratch work and throwaway test keys
+.claude/
+scratch/
+app/tools/.testkeys.json
+app/tools/testdata/
+
+# run logs and machine-made results
+contracts/live/*.log
+contracts/live/live_result.json
+contracts/live/live_paths_result.json
+contracts/live/assets/
+spikes/probe5_results*.json
+spikes/run.log
+spikes/blobs/
+spikes/jpeg_hex.txt
+study/results*.json
+study/blind/
+study/blind_synth/
+study/blind_key.json
+study/blind_synth_key.json
+
+# third-party photos and images derived from them. Their sources and licenses are listed in
+# fixtures/web/ATTRIBUTION.csv and fixtures/web2/ATTRIBUTION.csv (Wikimedia Commons, CC BY-SA / public domain).
+fixtures/web/*.jpg
+fixtures/web2/*.jpg
+fixtures/synth/
+
+__pycache__/
+*.pyc
+.env
+.env.local
+
+# superseded design drafts kept locally (they address the author directly and name other projects)
+docs/archive-*/
+spikes/*.log

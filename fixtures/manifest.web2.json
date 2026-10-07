@@ -1,0 +1,92 @@
+[
+ {
+  "file": "web2/w2_02_mid_build.jpg",
+  "stage": "roof",
+  "class": "ambiguous",
+  "issued_code": "K7Q2"
+ },
+ {
+  "file": "web2/w2_03_mid_build.jpg",
+  "stage": "roof",
+  "class": "honest",
+  "issued_code": "K7Q2"
+ },
+ {
+  "file": "web2/w2_11_roof_done_candidate.jpg",
+  "stage": "roof",
+  "class": "honest",
+  "issued_code": "K7Q2"
+ },
+ {
+  "file": "web2/w2_12_roof_done_candidate.jpg",
+  "stage": "roof",
+  "class": "ambiguous",
+  "issued_code": "K7Q2"
+ },
+ {
+  "file": "web2/w2_04_mid_build.jpg",
+  "stage": "roof",
+  "class": "ambiguous",
+  "issued_code": "K7Q2"
+ },
+ {
+  "file": "web2/w2_13_roof_done_candidate.jpg",
+  "stage": "roof",
+  "class": "ambiguous",
+  "issued_code": "K7Q2"
+ },
+ {
+  "file": "web2/w2_05_mid_build.jpg",
+  "stage": "roof",
+  "class": "wrong_stage",
+  "issued_code": "K7Q2"
+ },
+ {
+  "file": "web2/w2_09_mid_build.jpg",
+  "stage": "roof",
+  "class": "wrong_stage",
+  "issued_code": "K7Q2"
+ },
+ {
+  "file": "web/web_01_roof_not_done.jpg",
+  "stage": "roof",
+  "class": "wrong_stage",
+  "issued_code": "K7Q2"
+ },
+ {
+  "file": "web/web_06_under_construction.jpg",
+  "stage": "roof",
+  "class": "wrong_stage",
+  "issued_code": "K7Q2"
+ },
+ {
+  "file": "web2/w2_10_wrong_building.jpg",
+  "stage": "roof",
+  "class": "wrong_site",
+  "issued_code": "K7Q2"
+ },
+ {
+  "file": "web/web_11_wrong_building.jpg",
+  "stage": "roof",
+  "class": "wrong_site",
+  "issued_code": "K7Q2"
+ },
+ {
+  "file": "web2/w2_14_wrong_subject.jpg",
+  "stage": "roof",
+  "class": "wrong_subject",
+  "issued_code": "K7Q2"
+ },
+ {
+  "file": "web2/w2_06_mid_build.jpg",
+  "stage": "roof",
+  "class": "wrong_subject",
+  "issued_code": "K7Q2"
+ },
+ {
+  "file": "web/web_09_roof_done_candidate.jpg",
+  "stage": "roof",
+  "class": "wrong_subject",
+  "issued_code": "K7Q2"
+ }
+]

@@ -1,0 +1,114 @@
+[
+ {
+  "file": "synth/h1_code.jpg",
+  "stage": "roof",
+  "class": "honest",
+  "issued_code": "K7Q2",
+  "synthetic": true
+ },
+ {
+  "file": "synth/h1_wrongcode.jpg",
+  "stage": "roof",
+  "class": "wrong_code",
+  "issued_code": "K7Q2",
+  "synthetic": true
+ },
+ {
+  "file": "synth/h1_nocode.jpg",
+  "stage": "roof",
+  "class": "no_code",
+  "issued_code": "K7Q2",
+  "synthetic": true
+ },
+ {
+  "file": "synth/h1_sheet.jpg",
+  "stage": "roof",
+  "class": "code_on_sheet",
+  "issued_code": "K7Q2",
+  "synthetic": true
+ },
+ {
+  "file": "synth/h1_dark.jpg",
+  "stage": "roof",
+  "class": "dark",
+  "issued_code": "K7Q2",
+  "synthetic": true
+ },
+ {
+  "file": "synth/h1_cropped.jpg",
+  "stage": "roof",
+  "class": "cropped",
+  "issued_code": "K7Q2",
+  "synthetic": true
+ },
+ {
+  "file": "synth/h2_code.jpg",
+  "stage": "roof",
+  "class": "honest",
+  "issued_code": "K7Q2",
+  "synthetic": true
+ },
+ {
+  "file": "synth/h2_wrongcode.jpg",
+  "stage": "roof",
+  "class": "wrong_code",
+  "issued_code": "K7Q2",
+  "synthetic": true
+ },
+ {
+  "file": "synth/h2_nocode.jpg",
+  "stage": "roof",
+  "class": "no_code",
+  "issued_code": "K7Q2",
+  "synthetic": true
+ },
+ {
+  "file": "synth/h2_sheet.jpg",
+  "stage": "roof",
+  "class": "code_on_sheet",
+  "issued_code": "K7Q2",
+  "synthetic": true
+ },
+ {
+  "file": "synth/h2_dark.jpg",
+  "stage": "roof",
+  "class": "dark",
+  "issued_code": "K7Q2",
+  "synthetic": true
+ },
+ {
+  "file": "synth/h2_cropped.jpg",
+  "stage": "roof",
+  "class": "cropped",
+  "issued_code": "K7Q2",
+  "synthetic": true
+ },
+ {
+  "file": "synth/n1_code.jpg",
+  "stage": "roof",
+  "class": "wrong_stage",
+  "issued_code": "K7Q2",
+  "synthetic": true
+ },
+ {
+  "file": "synth/n1_sign.jpg",
+  "stage": "roof",
+  "class": "sign",
+  "issued_code": "K7Q2",
+  "synthetic": true
+ },
+ {
+  "file": "synth/n2_code.jpg",
+  "stage": "roof",
+  "class": "wrong_stage",
+  "issued_code": "K7Q2",
+  "synthetic": true
+ },
+ {
+  "file": "synth/n2_sign.jpg",
+  "stage": "roof",
+  "class": "sign",
+  "issued_code": "K7Q2",
+  "synthetic": true
+ }
+]
