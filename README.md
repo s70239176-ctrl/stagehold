@@ -52,7 +52,7 @@ genvm-lint check contracts/stagehold.py
 
 - No capture authenticity on the web (above).
 - Site alignment is implemented but uncalibrated and switched off; pages say "not checked yet".
-- No wallet connection: accounts are throwaway browser keys. The GenLayer client's wallet path requires MetaMask with a GenLayer Snap and has not been tested.
+- Wallet connection is optional (EIP-1193). It was verified with a mock wallet, not a real MetaMask; the default is a throwaway browser key.
 - Revocation of attestation certificates is not handled; trust roots are fixed at deploy.
 - This Studionet does not credit ordinary accounts, so payouts are verified through the contract's own balance.
 - The judge gate, real handwritten codes and real photos are untested.

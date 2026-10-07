@@ -69,7 +69,7 @@ State these plainly; they are part of the design, not an afterthought.
 - A photograph shows what is visible. It says nothing about title to the land, materials used or what is inside a wall.
 - Studionet is a development network. Its GEN has no market value, and ordinary accounts are not credited, so payouts are shown through the contract's own balance.
 - The panel has been tried on a small set of photographs and synthetic edits with a single model family. A study with real photographs and several model families is the next gate.
-- There is no wallet connection yet. The GenLayer client's wallet path needs MetaMask with a GenLayer Snap, which has not been tested.
+- Accounts are throwaway browser keys by default. A browser wallet can be connected from the account bar; that path was tested with a mock wallet, not a real MetaMask, so use the default accounts for a live demo.
 
 ## 5. If something goes wrong
 

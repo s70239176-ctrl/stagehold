@@ -5,7 +5,8 @@ import { JobHeader, StageList } from "../../components/JobStatus.tsx";
 import { Activity, Field, Notice, UnitInput, short } from "../../components/ui.tsx";
 import { Arrow, Camera, Check, Clock, Cross, Info } from "../../components/icons.tsx";
 import { useToast } from "../../components/Toast.tsx";
-import { addressFor, loadOrCreateKey, resetKey } from "../../lib/accounts.ts";
+import { addressFor, loadOrCreateKey, savedWallet, adoptWallet } from "../../lib/accounts.ts";
+import { AccountBar } from "../../components/AccountBar.tsx";
 import { encodeFrame, grabFrame, startCamera, thumbnailPng } from "../../lib/capture.ts";
 import { readAttempt, sendTx } from "../../lib/chain.ts";
 import { CAPTURE_NOTICE, humanSeconds, stageLabel } from "../../lib/config.ts";
@@ -52,7 +53,8 @@ export default function BuilderPage() {
   const { snapshot, error, refresh } = useSnapshot(contract);
 
   useEffect(() => {
-    const k = loadOrCreateKey("builder");
+    const w = savedWallet("builder");
+    const k = w && (window as unknown as { ethereum?: unknown }).ethereum ? adoptWallet("builder", w) : loadOrCreateKey("builder");
     setKey(k);
     const a = addressFor(k);
     setAddress(a);
@@ -178,10 +180,7 @@ export default function BuilderPage() {
               <span className="eyebrow">Builder console</span>
               <h1 style={{ fontSize: "1.9rem" }}>Show the stage, get paid</h1>
             </div>
-            <div className="row" style={{ gap: 6 }}>
-              <button className="chip" onClick={() => void navigator.clipboard?.writeText(address)} title="Copy your address">{address ? short(address) : "…"}</button>
-              <button className="btn btn-ghost btn-sm" onClick={() => { const k = resetKey("builder"); setKey(k); setAddress(addressFor(k)); setRegistered(false); }}>New account</button>
-            </div>
+            <AccountBar role="builder" signer={key} onSigner={(s) => { setKey(s); setAddress(addressFor(s)); setRegistered(false); }} onError={(m) => toast.push({ kind: "bad", title: "Wallet", body: m })} />
           </div>
 
           {busy ? <Activity text={busy} /> : null}

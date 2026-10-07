@@ -15,7 +15,7 @@ npm test                   # crypto, signature and word-list tests
 npm run typecheck && npm run build
 ```
 
-Amounts are entered and shown in GEN (18 decimals). Accounts are throwaway keys made in the browser and kept in localStorage (Studionet is gasless). A real wallet is a later step. The signing key is a non-extractable WebCrypto P-256 key kept in IndexedDB.
+Amounts are entered and shown in GEN (18 decimals). Accounts are throwaway keys made in the browser and kept in localStorage (Studionet is gasless). A browser wallet (MetaMask or any EIP-1193 wallet) can be connected instead from the account bar; it adds and switches to Studionet (chain 61999) and signs each transaction. The GenLayer Snap is not requested. The signing key is a non-extractable WebCrypto P-256 key kept in IndexedDB.
 
 ## What was verified
 
@@ -36,5 +36,5 @@ Not clicked individually: the builder page's expire button (same contract call a
 ## Not verified
 
 - A real phone camera, real handwritten codes, and real photos (the judge gate). The browser pane has no camera, so every browser test used a stand-in camera stream installed in the page context.
-- Other browsers, desktop layout, accessibility checks, and any wallet.
+- A real MetaMask: wallet routing was verified with a mock wallet that signs like one (a job deployed through `eth_sendTransaction` recorded the wallet as payer) and the connect flow with unit tests and a mock in the page. Real extension prompts, the Snap, and Studionet GEN balances in a wallet were not tried. Other browsers, desktop layout and accessibility checks are also untested.
 - Anything with real value.

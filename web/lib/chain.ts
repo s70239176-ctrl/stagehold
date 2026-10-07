@@ -10,6 +10,7 @@ import { TransactionStatus } from "genlayer-js/types";
 import type { Hash } from "genlayer-js/types";
 import type { AttemptView, Snapshot, TxOutcome } from "./types.ts";
 import { fromB64 } from "./crypto.ts";
+import { isWalletSigner, walletAddress, getProvider } from "./wallet.ts";
 
 type Hex = `0x${string}`;
 type RawRequest = { request: (a: { method: string; params: unknown[] }) => Promise<unknown> };
@@ -17,10 +18,17 @@ type RawRequest = { request: (a: { method: string; params: unknown[] }) => Promi
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 export const freshPrivateKey = (): string => generatePrivateKey();
-export const addressOf = (key: string): string => createAccount(key as Hex).address;
+export const addressOf = (signer: string): string =>
+  isWalletSigner(signer) ? walletAddress(signer) : createAccount(signer as Hex).address;
 
-function clientFor(key?: string) {
-  return createClient({ chain: studionet, account: key ? createAccount(key as Hex) : undefined });
+/** A sandbox key signs in the page; a "wallet:<address>" signer hands each transaction to the browser wallet. */
+function clientFor(signer?: string) {
+  if (signer && isWalletSigner(signer)) {
+    const provider = getProvider();
+    if (!provider) throw new Error("The wallet is no longer available. Reconnect it or switch to the sandbox account.");
+    return createClient({ chain: studionet, account: walletAddress(signer) as Hex, provider: provider as never });
+  }
+  return createClient({ chain: studionet, account: signer ? createAccount(signer as Hex) : undefined });
 }
 
 /** Retries rate limits and network blips; anything else is a real error and is rethrown. */

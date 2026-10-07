@@ -5,7 +5,8 @@ import { Activity, CopyButton, Field, Notice, UnitInput, short } from "../../com
 import { JobHeader, StageList } from "../../components/JobStatus.tsx";
 import { Arrow, Camera, Check, STAGE_ICON } from "../../components/icons.tsx";
 import { useToast } from "../../components/Toast.tsx";
-import { addressFor, loadOrCreateKey, resetKey } from "../../lib/accounts.ts";
+import { addressFor, loadOrCreateKey, savedWallet, adoptWallet } from "../../lib/accounts.ts";
+import { AccountBar } from "../../components/AccountBar.tsx";
 import { anchorFromFile } from "../../lib/capture.ts";
 import { deployJob, sendTx } from "../../lib/chain.ts";
 import { STAGES, humanSeconds, stageLabel } from "../../lib/config.ts";
@@ -50,7 +51,8 @@ export default function PayerPage() {
   const { snapshot, error, refresh } = useSnapshot(contract);
 
   useEffect(() => {
-    const k = loadOrCreateKey("payer");
+    const w = savedWallet("payer");
+    const k = w && (window as unknown as { ethereum?: unknown }).ethereum ? adoptWallet("payer", w) : loadOrCreateKey("payer");
     setKey(k);
     setAddress(addressFor(k));
     setContract(window.localStorage.getItem(JOB_KEY) ?? "");
@@ -147,10 +149,7 @@ export default function PayerPage() {
               <span className="eyebrow">Payer console</span>
               <h1 style={{ fontSize: "1.9rem" }}>Fund the work, release on proof</h1>
             </div>
-            <div className="row" style={{ gap: 6 }}>
-              <span className="chip">{address ? short(address) : "…"}</span>
-              <button className="btn btn-ghost btn-sm" onClick={() => { const k = resetKey("payer"); setKey(k); setAddress(addressFor(k)); }}>New account</button>
-            </div>
+            <AccountBar role="payer" signer={key} onSigner={(s) => { setKey(s); setAddress(addressFor(s)); }} onError={(m) => toast.push({ kind: "bad", title: "Wallet", body: m })} />
           </div>
 
           {busy ? <Activity text={busy} /> : null}
