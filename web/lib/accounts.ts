@@ -5,7 +5,7 @@ export type Role = "payer" | "builder";
 const KEY = (role: Role) => `stagehold.account.${role}.v1`;
 
 /**
- * Throwaway play-money keys for a gasless hosted dev network, made in this browser and kept in
+ * Throwaway keys for a gasless hosted dev network, made in this browser and kept in
  * localStorage. They hold test funds only; nothing is sent anywhere. A real wallet is a later step.
  */
 export function loadOrCreateKey(role: Role): string {

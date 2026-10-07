@@ -1,8 +1,8 @@
-# Stagehold web app (play money, Studionet)
+# Stagehold web app (GenLayer Studionet)
 
 Two mobile pages on top of `contracts/stagehold.py`: **/payer** (create the job, fund a stage with an anchor photo, issue a code) and **/builder** (register this browser, add attempt credits, request or unlock a code, take a live camera frame, submit). The builder sees three results, never the model's explanation: stage complete, code visible, same site (shown as "not checked yet" while alignment is off).
 
-> **WEB MODE has no capture authenticity.** A browser cannot prove a photo came from a live camera, so a gallery photo or a generated image cannot be told apart from a live frame. Every web job is created with `software_keys`, the snapshot says `capture_attested: false`, and every page carries a permanent banner. Play money only. The attested Android app is paused on the roadmap as a **mainnet gate**.
+> **WEB MODE has no capture authenticity.** A browser cannot prove a photo came from a live camera, so a gallery photo or a generated image cannot be told apart from a live frame. Every web job is created with `software_keys`, the snapshot says `capture_attested: false`, the builder's capture card shows a notice, the job panel shows a "Capture not verified" badge, and every page footer says so. Studionet GEN has no market value. The attested Android app is paused on the roadmap as a **mainnet gate**.
 
 ## Run
 
@@ -15,11 +15,12 @@ npm test                   # crypto, signature and word-list tests
 npm run typecheck && npm run build
 ```
 
-Accounts are throwaway play-money keys made in the browser and kept in localStorage (gasless Studionet). A real wallet is a later step. The signing key is a non-extractable WebCrypto P-256 key kept in IndexedDB.
+Amounts are entered and shown in GEN (18 decimals). Accounts are throwaway keys made in the browser and kept in localStorage (Studionet is gasless). A real wallet is a later step. The signing key is a non-extractable WebCrypto P-256 key kept in IndexedDB.
 
 ## What was verified
 
-- `typecheck`, `build` and 7 unit tests pass (the DER signature conversion is checked against Node's verifier, the shot message and the word list against the contract).
+- `typecheck`, `build` and 12 unit tests pass (the DER signature conversion is checked against Node's verifier, the shot message and the word list against the contract, and GEN parsing and formatting round-trip exactly to 18 decimals).
+- The interface was redesigned (landing page, payer and builder consoles, shared design system) and a full job was run through the new pages in GEN amounts: 0.5 GEN funded, a code issued, a key registered, 0.1 GEN of credits added, a frame signed and submitted, the panel accepted it, and the job completed with escrow back to 0 GEN. The layout was checked down to a 296 px viewport with no horizontal overflow.
 - **End to end in a browser, on Studionet (Oct 2026):** the payer page deployed a job, funded the roof stage with an uploaded anchor (19 KB thumbnail stored on-chain) and issued the code; the builder page registered a browser-made key, added credits, took a frame, signed it and submitted; the panel answered yes / yes; the stage went to `PAID` and the job to `DONE`. The browser pane has no camera, so a stand-in camera stream was installed in the page context for that test (no app code was changed for it).
 
 ## Also verified through the pages (test jobs with short windows)

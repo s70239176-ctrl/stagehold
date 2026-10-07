@@ -1,6 +1,6 @@
 # Stagehold: Product Requirements
 
-**Version:** 1.0 · **Status:** Studionet prototype (play money) · **Companion documents:** [TRD.md](TRD.md), [SDLC.md](SDLC.md)
+**Version:** 1.0 · **Status:** working build on GenLayer Studionet · **Companion documents:** [TRD.md](TRD.md), [SDLC.md](SDLC.md)
 
 ## 1. Summary
 
@@ -48,7 +48,7 @@ Title to the land, materials used, or what is inside a wall. The photograph is a
 
 A generated image is a file. A real defense is to refuse any file that did not come out of an attested camera app after the code existed.
 
-- **Web mode (current):** a browser cannot sign inside secure hardware. The builder page takes a live camera frame (no file picker) and signs it with a browser-made key. That key binds the shot to its stage, code, deadline and bytes, but it cannot distinguish a live frame from a generated or gallery image. Every web job says so: the contract exposes `capture_attested: false`, and every page shows a permanent banner. Web jobs are for play money and low-stakes pilots only.
+- **Web mode (current):** a browser cannot sign inside secure hardware. The builder page takes a live camera frame (no file picker) and signs it with a browser-made key. That key binds the shot to its stage, code, deadline and bytes, but it cannot distinguish a live frame from a generated or gallery image. Every web job says so: the contract exposes `capture_attested: false`, and every page shows a permanent banner. Web jobs are for Studionet and low-stakes pilots only.
 - **Attested mode (roadmap, mainnet gate):** an Android capture app generates a hardware-backed key whose attestation chain the contract verifies. A draft app and offline tools exist and are paused. Real value moves only in jobs that require an attested key. iOS follows Android.
 - **Not closed even with attestation:** a genuine camera pointed at a screen or a print, and a rooted or hooked device feeding the app a fake image.
 - **Deterministic site alignment** (image libraries in the contract runtime, comparing the frame's thumbnail with the stored anchor) removes the lazy fake, such as a house invented from scratch. An edited copy of the anchor still passes it, so it is not the control. It is implemented but uncalibrated and switched off by default; pages show "not checked yet" while it is off.
@@ -61,7 +61,7 @@ A generated image is a file. A real defense is to refuse any file that did not c
 2. One contract per job, in the network's native token, with the five fixed stage definitions.
 3. Scripted failure tests before relying on any screen.
 4. Two mobile web pages (payer and builder).
-5. One real wall with play money.
+5. One real wall on Studionet.
 6. Attested Android capture.
 7. Last: real value, capped, with a single template, in a separate escrow that listens for finality.
 
@@ -79,7 +79,7 @@ A generated image is a file. A real defense is to refuse any file that did not c
 - Honest frames pay; dark frames, wrong angles, wrong buildings and an instruction sign do not.
 - Payment never moves before finality, and nothing else on a job moves while a payment settles.
 - A builder is paid when the payer is offline.
-- A real-wall trial with play money passes, and the builder reports that they would have waited for a real payment.
+- A real-wall trial on Studionet passes, and the builder reports that they would have waited for a real payment.
 
 ## 11. Stop conditions
 

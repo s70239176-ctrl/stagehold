@@ -2,7 +2,7 @@
 
 Hold a construction payment until a named stage is visible in a photo, then pay the builder, even if the payer does nothing. A panel of independent GenLayer validators reads the photo; neither the payer nor the builder chose it.
 
-> **Status: a Studionet prototype with play money. Not audited. Do not use real value.**
+> **Status: a working build on GenLayer Studionet, a development network whose GEN has no market value. Not audited; do not use real value.**
 >
 > **The web version cannot prove a photo came from a live camera.** A gallery photo or an AI-generated image cannot be told apart from a live frame, and the contract marks every web job `capture_attested: false`. The attested Android capture app is paused and is a **mainnet gate**: real value only moves in jobs that require an attested key.
 >
@@ -37,7 +37,7 @@ npm run dev                # http://localhost:3100
 3. No environment variables are needed. Optional: `NEXT_PUBLIC_GENLAYER_RPC` (defaults to the Studionet RPC) and `NEXT_PUBLIC_EXPLORER_URL`.
 4. `web/public/stagehold.py` is committed so the payer page can deploy a job. After any change to the contract, run `python contracts/build.py` and `npm run sync-contract` in `web/`, and commit the result.
 
-The deployed site talks straight to the public GenLayer Studionet RPC from each visitor's browser, using throwaway play-money keys kept in that browser's localStorage. The camera needs HTTPS, which Vercel provides.
+The deployed site talks straight to the public GenLayer Studionet RPC from each visitor's browser, using a throwaway account kept in that browser's localStorage. Amounts are in GEN, the network's native token, held and paid by the job contract. The camera needs HTTPS, which Vercel provides.
 
 ## Tests
 

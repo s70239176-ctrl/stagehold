@@ -19,7 +19,7 @@ fixtures/    manifests and attribution lists (photographs are fetched, not store
 
 ## 2. Direction
 
-- **Now:** the web version on Studionet with play money. It has no capture authenticity and says so on every page and in the contract.
+- **Now:** the web version on Studionet. It has no capture authenticity and says so on every page and in the contract.
 - **Paused, on the roadmap:** the attested Android capture app. It is a **mainnet gate**: real value moves only in jobs that require an attested key. iOS follows Android.
 - **Release order:** web on Studionet, then the real-photo judge study, then attested Android capture, then capped real value in a separate escrow.
 
@@ -54,7 +54,7 @@ Planned gate (proposed thresholds): honest frames pass unanimously in at least 9
 | 1. Judge study (gate 1) | Real photographs, several model families, frozen wording | Open |
 | 2. Contract (gate 2) | Scripted failures and invariants on Studionet | Passed for the paths listed in the TRD |
 | 3. Web client | Payer and builder pages | Done; real camera untested |
-| 4. Real wall, play money (gate 3) | Payer anchors in person, builder shoots later; two honest frames pay, dark, wrong-angle and sign frames do not | Open. **Stop** if honest shots fail often or the builder would not wait for a real payment |
+| 4. Real wall on Studionet (gate 3) | Payer anchors in person, builder shoots later; two honest frames pay, dark, wrong-angle and sign frames do not | Open. **Stop** if honest shots fail often or the builder would not wait for a real payment |
 | 5. Attested Android capture | Compile and run the app; register a real device chain; submit a real signed shot | Open (mainnet gate) |
 | 6. Real value | Capped, single template, separate stablecoin escrow that listens for finality; no off-ramp, chat or marketplace | Not started |
 

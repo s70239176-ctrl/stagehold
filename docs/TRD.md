@@ -1,6 +1,6 @@
 # Stagehold: Technical Requirements
 
-**Version:** 1.0 · **Status:** implemented and exercised on GenLayer Studionet with play money · **Companion documents:** [PRD.md](PRD.md), [SDLC.md](SDLC.md)
+**Version:** 1.0 · **Status:** implemented and exercised on GenLayer Studionet · **Companion documents:** [PRD.md](PRD.md), [SDLC.md](SDLC.md)
 
 The contract source is generated: `python contracts/build.py` assembles `contracts/stagehold.py` from `study/prompt.py` (stage wording and judge prompt), `spikes/attest_verify.py` (attestation verifier), `contracts/src/align.py` (site alignment) and `contracts/src/body.py` (the contract). Edit the parts, never the generated file.
 
@@ -158,7 +158,7 @@ A fallback code is predictable to a builder who can compute it. That is acceptab
 
 ## 11. Exercised on Studionet
 
-With throwaway keys and play money (logs in `contracts/live/`):
+With throwaway accounts (logs in `contracts/live/`):
 
 - Full job: deposit, fund with anchor, credits, key registration, code, a wrong-code shot (not paid, fee burned), a good shot (paid after finality, balance conserved).
 - A shot with a corrupted signature reverts and leaves credits, attempts and balance unchanged.

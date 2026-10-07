@@ -5,12 +5,12 @@ export const EXPLORER_URL = process.env.NEXT_PUBLIC_EXPLORER_URL ?? "https://exp
 export const MAX_JPEG = 150 * 1024;
 export const MAX_THUMB = 30 * 1024;
 
-export const STAGES: ReadonlyArray<{ id: string; label: string }> = [
-  { id: "ring_beam", label: "Ring beam" },
-  { id: "blockwork", label: "Blockwork to lintel" },
-  { id: "roof", label: "Roof" },
-  { id: "openings", label: "Openings set" },
-  { id: "plaster", label: "One wall plastered" },
+export const STAGES: ReadonlyArray<{ id: string; label: string; brief: string }> = [
+  { id: "ring_beam", label: "Ring beam", brief: "A continuous reinforced concrete beam along the top of the walls." },
+  { id: "blockwork", label: "Blockwork to lintel", brief: "Walls built in blocks up to the height of the openings' lintels." },
+  { id: "roof", label: "Roof", brief: "Roof covering over the full roof, continuous ridge, no open sky." },
+  { id: "openings", label: "Openings set", brief: "Door and window frames installed in every opening." },
+  { id: "plaster", label: "One wall plastered", brief: "At least one full wall face plastered over its whole visible face." },
 ];
 
 export const stageLabel = (id: string): string => STAGES.find((s) => s.id === id)?.label ?? id;
@@ -22,6 +22,8 @@ export function humanSeconds(s: number): string {
   return `${s} seconds`;
 }
 
-export const WEB_MODE_WARNING =
-  "WEB MODE: this page cannot prove a photo came from a live camera. A gallery photo or an AI-generated image " +
-  "cannot be told apart from a live frame. Play money only.";
+export const when = (unix: number): string =>
+  new Date(unix * 1000).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+
+export const CAPTURE_NOTICE =
+  "This web version cannot verify that a photograph came from a live camera. A gallery photo or a generated image looks the same to the contract. An attested mobile capture app is planned before any real value is used.";
