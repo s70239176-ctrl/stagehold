@@ -172,6 +172,7 @@ With throwaway accounts (logs in `contracts/live/`):
 - Web mode cannot authenticate a photo's source. Attested capture (Android) is paused as a mainnet gate; the draft app has never been compiled or run on a device, and no real device chain has been registered.
 - The judge has been tried only on small sets (web photographs with stage-only scoring, and synthetic edits) with a single model family. The real-photo, multi-vendor judge study is open.
 - Alignment is uncalibrated and off.
+- No wallet connection. The GenLayer client connects a browser wallet only through MetaMask with a GenLayer Snap (`wallet_requestSnaps`); that path has not been exercised, so accounts are throwaway browser keys.
 - Revocation is unhandled; iOS is unimplemented.
 - A panel disagreement is free to retry.
 - Real handwritten codes, other stages (ring beam, blockwork, openings, plaster) and real value are untested.

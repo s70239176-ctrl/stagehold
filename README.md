@@ -17,7 +17,7 @@ Hold a construction payment until a named stage is visible in a photo, then pay 
 | `study/` | The judge's stage wording and prompt (`prompt.py`) and the judge-study harness. |
 | `app/` | The paused Android attested-capture app (draft, uncompiled) and tested offline tools. |
 | `spikes/` | Feasibility probes of the contract runtime and the pure-Python attestation verifier. |
-| `docs/` | Product requirements, technical requirements (with measured runtime facts and live results) and the development plan and status. |
+| `docs/` | Product requirements, technical requirements (with measured runtime facts and live results), the development plan and status, and a demo guide (`docs/DEMO.md`). |
 | `tests/` | Local tests of the contract's pure functions. |
 | `contracts/live/` | Scripts that run the contract live on Studionet with throwaway keys. |
 
@@ -52,6 +52,7 @@ genvm-lint check contracts/stagehold.py
 
 - No capture authenticity on the web (above).
 - Site alignment is implemented but uncalibrated and switched off; pages say "not checked yet".
+- No wallet connection: accounts are throwaway browser keys. The GenLayer client's wallet path requires MetaMask with a GenLayer Snap and has not been tested.
 - Revocation of attestation certificates is not handled; trust roots are fixed at deploy.
 - This Studionet does not credit ordinary accounts, so payouts are verified through the contract's own balance.
 - The judge gate, real handwritten codes and real photos are untested.
