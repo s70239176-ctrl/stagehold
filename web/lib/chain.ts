@@ -10,7 +10,7 @@ import { TransactionStatus } from "genlayer-js/types";
 import type { Hash } from "genlayer-js/types";
 import type { AttemptView, Snapshot, TxOutcome } from "./types.ts";
 import { fromB64 } from "./crypto.ts";
-import { isWalletSigner, walletAddress, getProvider } from "./wallet.ts";
+import { isWalletSigner, walletAddress, getProvider, assertSameAccount } from "./wallet.ts";
 
 type Hex = `0x${string}`;
 type RawRequest = { request: (a: { method: string; params: unknown[] }) => Promise<unknown> };
@@ -118,6 +118,7 @@ export async function sendTx(
   value = 0n,
   onPhase?: (p: Phase, detail?: string) => void,
 ): Promise<TxOutcome> {
+  if (isWalletSigner(key)) await assertSameAccount(key);
   const client = clientFor(key);
   onPhase?.("signing");
   const hash = await paced(() =>
@@ -153,6 +154,7 @@ export async function deployJob(
 ): Promise<string> {
   const code = await (await fetch("/stagehold.py")).text();
   if (!code.includes("class Stagehold")) throw new Error("The contract source is missing; run npm run sync-contract.");
+  if (isWalletSigner(key)) await assertSameAccount(key);
   const client = clientFor(key);
   onPhase?.("signing");
   const hash = await paced(() =>

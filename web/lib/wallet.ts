@@ -16,6 +16,22 @@ export const walletAddress = (s: string): string => s.slice(PREFIX.length);
 export const getProvider = (): Eip1193 | undefined =>
   typeof window === "undefined" ? undefined : (window as unknown as { ethereum?: Eip1193 }).ethereum;
 
+/** The wallet's currently selected account, or null if it is locked or disconnected. */
+export async function activeAccount(provider: Eip1193 | undefined = getProvider()): Promise<string | null> {
+  if (!provider) return null;
+  const accounts = (await provider.request({ method: "eth_accounts" })) as string[];
+  return accounts?.[0] ?? null;
+}
+
+/** A wallet signs only as its selected account; refuse early, with a plain message, if that changed. */
+export async function assertSameAccount(signer: string): Promise<void> {
+  const active = await activeAccount();
+  if (!active) throw new Error("The wallet is locked or disconnected. Unlock it and choose Connect wallet again.");
+  if (active.toLowerCase() !== walletAddress(signer).toLowerCase()) {
+    throw new Error(`The wallet is now on ${active.slice(0, 6)}…${active.slice(-4)}, not ${walletAddress(signer).slice(0, 6)}…${walletAddress(signer).slice(-4)}. Choose Connect wallet to use the new account, or switch the wallet back.`);
+  }
+}
+
 const chainIdHex = `0x${studionet.id.toString(16)}`;
 
 /** Ask the wallet for an account, then add and switch to Studionet if it is on another chain. */

@@ -16,6 +16,18 @@ export function AccountBar({ role, signer, onSigner, onError }: {
   useEffect(() => setHasWallet(!!getProvider()), []);
   const wallet = isWalletSigner(signer);
 
+  // Follow the wallet if the user switches account or locks it.
+  useEffect(() => {
+    const p = getProvider() as (ReturnType<typeof getProvider> & { on?: (e: string, f: (a: string[]) => void) => void; removeListener?: (e: string, f: (a: string[]) => void) => void }) | undefined;
+    if (!p?.on || !wallet) return;
+    const h = (accts: string[]) => {
+      if (accts?.[0]) onSigner(adoptWallet(role, accts[0]));
+      else onSigner(adoptSandbox(role));
+    };
+    p.on("accountsChanged", h);
+    return () => p.removeListener?.("accountsChanged", h);
+  }, [wallet, role, onSigner]);
+
   async function connect() {
     setBusy(true);
     try {
