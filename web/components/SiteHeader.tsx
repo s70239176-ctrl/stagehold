@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Github, Logo } from "./icons.tsx";
+import { Arrow, Logo } from "./icons.tsx";
 
 const LINKS = [
+  { href: "/#method", label: "How it works" },
   { href: "/payer", label: "Payer" },
   { href: "/builder", label: "Builder" },
+  { href: "/#protocol", label: "Protocol" },
   { href: "/camera", label: "Camera" },
 ];
 
@@ -20,7 +22,6 @@ export function SiteHeader() {
           Stagehold
         </Link>
         <nav className="nav-links" aria-label="Primary">
-          <Link href="/#how">How it works</Link>
           {LINKS.map((l) => (
             <Link key={l.href} href={l.href} aria-current={path === l.href ? "page" : undefined}>
               {l.label}
@@ -32,10 +33,9 @@ export function SiteHeader() {
             <span className="dot" />
             <span className="hide-sm">GenLayer</span> Studionet
           </span>
-          <a className="chip" href="https://github.com/s70239176-ctrl/stagehold" target="_blank" rel="noreferrer" aria-label="Source on GitHub">
-            <Github size={16} />
-            <span className="hide-sm">Source</span>
-          </a>
+          <Link className="btn btn-primary btn-sm" href="/payer">
+            <span>Start a project</span> <Arrow size={14} />
+          </Link>
         </div>
       </div>
     </header>
@@ -47,16 +47,19 @@ export function SiteFooter() {
     <footer className="footer">
       <div className="container stack-sm">
         <div className="spread">
-          <span className="brand" style={{ color: "var(--ink-2)" }}>
-            <Logo size={22} /> Stagehold
+          <span className="brand">
+            <Logo size={20} /> Stagehold
           </span>
-          <span>Built on GenLayer Intelligent Contracts. Running on the Studionet network.</span>
+          <span className="label-t">Built on GenLayer Intelligent Contracts / Studionet</span>
         </div>
-        <p style={{ maxWidth: "88ch" }}>
-          A photograph proves what is visible, not who owns the land, what materials were used or what is inside a wall. The web
-          version cannot verify that a photograph came from a live camera; an attested mobile capture app is planned before real
+        <p style={{ maxWidth: "92ch" }}>
+          A photograph proves what is visible, not who owns the land, what materials were used or what is inside a wall. Web
+          capture takes live-camera frames only and is not device-attested; an attested mobile capture app is planned before real
           value is used. Studionet GEN has no market value.
         </p>
+        <a href="https://github.com/s70239176-ctrl/stagehold" target="_blank" rel="noreferrer" className="label-t" style={{ width: "fit-content" }}>
+          Source on GitHub →
+        </a>
       </div>
     </footer>
   );

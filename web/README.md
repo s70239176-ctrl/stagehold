@@ -4,6 +4,10 @@ Two mobile pages on top of `contracts/stagehold.py`: **/payer** (create the job,
 
 > **WEB MODE has no capture authenticity.** A browser cannot prove a photo came from a live camera, so a gallery photo or a generated image cannot be told apart from a live frame. Every web job is created with `software_keys`, the snapshot says `capture_attested: false`, the builder's capture card shows a notice, the job panel shows a "Capture not verified" badge, and every page footer says so. Studionet GEN has no market value. The attested Android app is paused on the roadmap as a **mainnet gate**.
 
+## Design
+
+Graphite and warm white with one blue accent (`#6bb6d8`), Geist and Geist Mono, a visible 12-column grid, sharp rectangles and thin borders. The landing page (`app/page.tsx`, `components/landing.tsx`, `components/Plate.tsx`) is a set of editorial bands: method (scroll-driven), project schedule, evidence, independent panel, escrow, limits. Its drawings, figures and the 3 of 3 panel are original illustrations labelled as samples, not data from a real project or the chain; there is no stock photography. The payer and builder consoles keep their logic and are restyled through the same tokens in `app/globals.css`. Motion respects `prefers-reduced-motion`.
+
 ## Run
 
 ```

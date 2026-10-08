@@ -74,7 +74,7 @@ export function StageList({ snapshot, onPick, picked }: { snapshot: Snapshot; on
             <div
               className="stage"
               key={s.id}
-              style={{ cursor: clickable ? "pointer" : undefined, background: picked === s.id ? "rgba(110,231,183,0.05)" : undefined }}
+              style={{ cursor: clickable ? "pointer" : undefined, background: picked === s.id ? "rgba(107,182,216,0.07)" : undefined }}
               onClick={clickable ? () => onPick!(s.id) : undefined}
             >
               <div className={`stage-ico ${cls}`}>{st?.status === "PAID" ? <Check size={18} /> : st?.status === "SETTLING" ? <Clock size={18} /> : <Icon size={18} />}</div>

@@ -42,13 +42,12 @@ export const STAGE_ICON: Record<string, (p: P) => ReactNode> = {
   plaster: StagePlaster,
 };
 
-export function Logo({ size = 28 }: { size?: number }) {
+export function Logo({ size = 24 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="#6ee7b7" />
-      <rect x="7" y="19" width="18" height="4" rx="1.2" fill="#04130c" />
-      <rect x="7" y="13" width="13" height="4" rx="1.2" fill="#04130c" opacity="0.72" />
-      <rect x="7" y="7" width="8" height="4" rx="1.2" fill="#04130c" opacity="0.45" />
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="2.75" y="2.75" width="18.5" height="18.5" />
+      <path d="M2.75 8.9h18.5M2.75 15.1h18.5" />
+      <path d="M12 8.9v6.2" stroke="#6bb6d8" />
     </svg>
   );
 }
