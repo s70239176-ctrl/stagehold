@@ -43,6 +43,6 @@ Before a frame is kept, the page watches the stream for about a second (`web/lib
 
 ## Not verified
 
-- A real phone camera, real handwritten codes, and real photos (the judge gate). The browser pane has no camera, so every browser test used a stand-in camera stream installed in the page context.
+- A real phone camera, real handwritten codes, and real photographs. The browser pane has no camera, so every browser test used a stand-in camera stream installed in the page context.
 - Wallets other than the one the maintainer tried. Wallet connection was verified with a mock wallet that signs like one (a job deployed through `eth_sendTransaction` recorded the wallet as payer) and then used by the maintainer with a real browser wallet; the GenLayer Snap is not requested. Other browsers, desktop layout and accessibility checks are untested.
 - Anything with real value.

@@ -55,7 +55,7 @@ Studionet behaviours that shaped the design:
 | `status` | `CREATED`, `ACTIVE`, `CANCELLED`, `EXPIRED`, `DONE`; plus a `settling` lock |
 | `seen`, `log` | Submitted-shot ids (no resubmission) and per-attempt results |
 
-Stage wording is constant in the source (`study/prompt.py`). The payer chooses only which stages to fund and the amounts. The wording is version 0: freeze it only after the judge study passes, and re-run the study after any change.
+Stage wording is constant in the source (`study/prompt.py`). The payer chooses only which stages to fund and the amounts. The wording is version 0: re-test it on Studionet after any change.
 
 ### 3.1 Stage wording (version 0)
 
@@ -170,7 +170,7 @@ With throwaway accounts (logs in `contracts/live/`):
 ## 12. Known limitations and open items
 
 - Web mode cannot authenticate a photo's source. Attested capture (Android) is paused as a mainnet gate; the draft app has never been compiled or run on a device, and no real device chain has been registered.
-- The judge has been tried only on small sets (web photographs with stage-only scoring, and synthetic edits) with a single model family. The real-photo, multi-vendor judge study is open.
+- Real photographs and handwritten codes have not been tried on-chain yet; the real-wall trial covers them.
 - Alignment is uncalibrated and off.
 - Wallet connection is optional: any EIP-1193 wallet is asked for an account and for Studionet to be added; the GenLayer client then routes writes to `eth_sendTransaction`. Verified with a mock wallet that signs locally (deploy recorded the wallet as payer) and used by the maintainer with a real browser wallet. The GenLayer Snap is not requested; other wallets are untested.
 - Revocation is unhandled; iOS is unimplemented.
@@ -187,4 +187,4 @@ With throwaway accounts (logs in `contracts/live/`):
 | Web app | `web`: `npm test` (signature conversion against Node's verifier, message layout, word list equals the contract's), typecheck, build, and browser runs |
 | Attestation | `spikes/test_attest_verify.py` against Google's published sample chains, including tamper and malformed cases |
 | Offline package checks | `app/tools/check_package.py` runs the contract's own code on app output before any transaction |
-| Judge | `study/run_study.py` (several model providers, stage-only or full) and the blind-set scripts |
+| Judging | Live runs on Studionet (`contracts/live/`); `study/` holds offline tools for the prompt |

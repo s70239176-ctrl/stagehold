@@ -57,7 +57,7 @@ A generated image is a file. A real defense is to refuse any file that did not c
 
 ## 8. Scope and release order
 
-1. A judge study with real photographs and several model families, before any real value (see SDLC).
+1. A real-wall trial with real photographs and handwritten codes, before any real value (see SDLC).
 2. One contract per job, in the network's native token, with the five fixed stage definitions.
 3. Scripted failure tests before relying on any screen.
 4. Two mobile web pages (payer and builder).
@@ -83,14 +83,14 @@ A generated image is a file. A real defense is to refuse any file that did not c
 
 ## 11. Stop conditions
 
-- **Judge study:** if honest frames split across models, stop. A contract cannot create agreement that the models do not have.
+- **Real-wall trial:** if honest frames split across the validators' models, stop. A contract cannot create agreement that the models do not have.
 - **Real-wall trial:** if honest shots fail often, or the builder would not have waited for a real payment, stop.
 
 ## 12. Risks and limitations
 
 | Risk | Handling |
 |---|---|
-| Models disagree on honest frames | Judge study first; stop condition. A split panel pays nothing. |
+| Models disagree on honest frames | Real-wall trial first; stop condition. A split panel pays nothing. |
 | A builder retries freely when the panel disagrees | A disagreement applies no state and charges nothing; only agreed answers burn the fee. Accepted for now. |
 | Site alignment unreliable across time, angle and a changing scene | Measure on real frames before enforcing; consider a standing-point protocol for the anchor. |
 | Offline rehearsal against public models | Stated plainly; fee on live attempts; fresh codes. |
