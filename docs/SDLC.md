@@ -76,3 +76,14 @@ Planned gate (proposed thresholds): honest frames pass unanimously in at least 9
 - [ ] Gate 3: real-wall trial passed
 - [ ] Attested capture verified with a real device
 - [ ] The README states the limits: public photographs, offline rehearsal, generated images, no proof of title or materials
+
+## 8. Submission checklist
+
+- [x] App runs locally, build passes, tests pass
+- [x] `.env` is not committed; `web/.env.example` exists; no keys in code
+- [x] README has summary, contract details, stack, how it works, run steps, demo evidence, limitations, roadmap
+- [x] Contract deployed on Studionet and documented (reference deployment in the README; each job deploys its own contract)
+- [x] Screenshots added (`docs/screenshots/`)
+- [ ] Live link: deploy `web/` on Vercel and add the URL to the README
+- [ ] Demo video recorded (script in [DEMO.md](DEMO.md))
+- [ ] Real-photo judge study (gate 1) and real-wall trial (gate 3)
