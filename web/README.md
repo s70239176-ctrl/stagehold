@@ -44,5 +44,5 @@ Before a frame is kept, the page watches the stream for about a second (`web/lib
 ## Not verified
 
 - A real phone camera, real handwritten codes, and real photos (the judge gate). The browser pane has no camera, so every browser test used a stand-in camera stream installed in the page context.
-- A real MetaMask: wallet routing was verified with a mock wallet that signs like one (a job deployed through `eth_sendTransaction` recorded the wallet as payer) and the connect flow with unit tests and a mock in the page. Real extension prompts, the Snap, and Studionet GEN balances in a wallet were not tried. Other browsers, desktop layout and accessibility checks are also untested.
+- Wallets other than the one the maintainer tried. Wallet connection was verified with a mock wallet that signs like one (a job deployed through `eth_sendTransaction` recorded the wallet as payer) and then used by the maintainer with a real browser wallet; the GenLayer Snap is not requested. Other browsers, desktop layout and accessibility checks are untested.
 - Anything with real value.

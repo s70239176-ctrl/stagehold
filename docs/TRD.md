@@ -172,7 +172,7 @@ With throwaway accounts (logs in `contracts/live/`):
 - Web mode cannot authenticate a photo's source. Attested capture (Android) is paused as a mainnet gate; the draft app has never been compiled or run on a device, and no real device chain has been registered.
 - The judge has been tried only on small sets (web photographs with stage-only scoring, and synthetic edits) with a single model family. The real-photo, multi-vendor judge study is open.
 - Alignment is uncalibrated and off.
-- Wallet connection is optional: any EIP-1193 wallet is asked for an account and for Studionet to be added; the GenLayer client then routes writes to `eth_sendTransaction`. Verified with a mock wallet that signs locally (deploy recorded the wallet as payer). Real MetaMask and the GenLayer Snap are untested.
+- Wallet connection is optional: any EIP-1193 wallet is asked for an account and for Studionet to be added; the GenLayer client then routes writes to `eth_sendTransaction`. Verified with a mock wallet that signs locally (deploy recorded the wallet as payer) and used by the maintainer with a real browser wallet. The GenLayer Snap is not requested; other wallets are untested.
 - Revocation is unhandled; iOS is unimplemented.
 - A panel disagreement is free to retry.
 - Real handwritten codes, other stages (ring beam, blockwork, openings, plaster) and real value are untested.
