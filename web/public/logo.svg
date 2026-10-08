@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 40" role="img" aria-label="Stagehold">
+  <rect width="260" height="40" fill="#0a0b0c"/>
+  <g transform="translate(8 8) scale(1)" fill="none" stroke="#f2f1ed" stroke-width="1.5">
+    <rect x="2.75" y="2.75" width="18.5" height="18.5"/>
+    <path d="M2.75 8.9h18.5M2.75 15.1h18.5"/>
+    <path d="M12 8.9v6.2" stroke="#6bb6d8"/>
+  </g>
+  <text x="44" y="26" fill="#f2f1ed" font-family="Geist, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" letter-spacing="3.4">STAGEHOLD</text>
+</svg>

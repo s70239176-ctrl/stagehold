@@ -1,3 +1,5 @@
+<p align="center"><img src="web/public/logo.svg" alt="Stagehold" width="260"></p>
+
 # Stagehold
 
 **Payment follows proof.** Stagehold holds a construction payment in a GEN escrow contract and releases it stage by stage, only when a named stage is visible in a photograph judged by a panel of GenLayer validators that neither the payer nor the builder chose. The builder is paid at finality even if the payer says nothing.
