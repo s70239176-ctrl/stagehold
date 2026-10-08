@@ -187,4 +187,4 @@ With throwaway accounts (logs in `contracts/live/`):
 | Web app | `web`: `npm test` (signature conversion against Node's verifier, message layout, word list equals the contract's), typecheck, build, and browser runs |
 | Attestation | `spikes/test_attest_verify.py` against Google's published sample chains, including tamper and malformed cases |
 | Offline package checks | `app/tools/check_package.py` runs the contract's own code on app output before any transaction |
-| Judging | Live runs on Studionet (`contracts/live/`); `study/` holds offline tools for the prompt |
+| Judging | Live runs on Studionet (`contracts/live/`) |

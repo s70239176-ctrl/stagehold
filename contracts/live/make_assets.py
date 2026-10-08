@@ -10,8 +10,8 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
-sys.path.insert(0, os.path.join(ROOT, "study"))
-from run_study import prepare_frame  # noqa: E402
+sys.path.insert(0, HERE)
+from frames import prepare_frame  # noqa: E402
 from PIL import Image  # noqa: E402
 
 OUT = os.path.join(HERE, "assets")

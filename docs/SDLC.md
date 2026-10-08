@@ -8,13 +8,13 @@ Principles: test the judging prompt before the product around it; stop at a gate
 
 ```
 contracts/   stagehold.py (generated), src/ (align.py, body.py), build.py, live/ (Studionet scripts)
-study/       judging prompt and stage wording, offline test tools
+study/       judging prompt and stage wording (embedded into the contract)
 web/         Next.js app: payer page and builder page
 app/         paused Android capture app (draft) and tested offline tools
 spikes/      runtime probes and the pure-Python attestation verifier with its tests
 tests/       local tests of the contract's pure functions
 docs/        PRD, TRD, SDLC
-fixtures/    manifests and attribution lists (photographs are fetched, not stored)
+fixtures/    attribution lists for test photographs (the photographs are fetched, not stored)
 ```
 
 ## 2. Direction

@@ -13,13 +13,8 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
-sys.path.insert(0, os.path.join(ROOT, "study"))
-
-# Reuse the drawing helpers from study/make_synthetic.py without running its generator.
-src = open(os.path.join(ROOT, "study", "make_synthetic.py"), encoding="utf-8").read().split("manifest = []")[0]
-ns = {"__file__": os.path.join(ROOT, "study", "make_synthetic.py")}
-exec(compile(src, "make_synthetic_helpers", "exec"), ns)
-from run_study import prepare_frame  # noqa: E402
+sys.path.insert(0, HERE)
+from frames import chalk, prepare_frame  # noqa: E402
 from PIL import Image  # noqa: E402
 
 code, prefix = sys.argv[1], sys.argv[2]
@@ -28,7 +23,7 @@ words = code.split(" ")
 cx = 832                      # clear wall right of the door, below the window (original-pixel coordinates)
 ys = [1070] if len(words) == 1 else [1030, 1125]
 for word, y in zip(words, ys):
-    img = ns["chalk"](img, word, (cx, y), 74)
+    img = chalk(img, word, (cx, y), 74)
 tmp = os.path.join(HERE, "assets", prefix + "_src.jpg")
 img.save(tmp, quality=90)
 open(os.path.join(HERE, "assets", prefix + ".jpg"), "wb").write(prepare_frame(tmp))

@@ -62,7 +62,7 @@ Main methods (17 in all): `deposit`, `fund`, `issue_code`, `request_code`, `trig
 |---|---|
 | `contracts/stagehold.py` | The job contract. **Generated** by `python contracts/build.py` from `study/prompt.py`, `spikes/attest_verify.py`, `contracts/src/align.py` and `contracts/src/body.py`. |
 | `web/` | The Next.js app: landing page, payer console, builder console, camera check. See [web/README.md](web/README.md). |
-| `study/` | The stage wording and judging prompt that the contract sends to the validators, with offline test tools. |
+| `study/` | The stage wording and judging prompt that the contract sends to the validators (`prompt.py`). |
 | `docs/` | [PRD](docs/PRD.md), [TRD](docs/TRD.md), [SDLC](docs/SDLC.md), [demo guide](docs/DEMO.md), screenshots. |
 | `tests/` | Local tests of the contract's pure functions. |
 | `contracts/live/` | Scripts that run the contract live on Studionet with throwaway keys. |
