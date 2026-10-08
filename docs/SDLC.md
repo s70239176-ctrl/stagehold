@@ -78,5 +78,5 @@ The judges are GenLayer validators: the protocol selects the panel for each tran
 - [x] Contract deployed on Studionet and documented (reference deployment in the README; each job deploys its own contract)
 - [x] Screenshots added (`docs/screenshots/`)
 - [ ] Live link: deploy `web/` on Vercel and add the URL to the README
-- [x] Demo video recorded ([demo/stagehold-demo.mp4](demo/stagehold-demo.mp4), 72 s; script in [DEMO.md](DEMO.md))
+- [x] Demo video recorded ([demo/stagehold-demo.mp4](demo/stagehold-demo.mp4), 1 min 50 s with voiceover; script in [DEMO.md](DEMO.md))
 - [ ] Real-wall trial (gate 3)

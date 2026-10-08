@@ -1,0 +1,17 @@
+{
+"title": "Stagehold. Payment follows proof. Here is the full flow, recorded live on GenLayer Studionet.",
+"Landing": "Stagehold holds a construction payment in escrow, and releases it stage by stage.",
+"Payer console": "The payer names the builder, sets a small fee per attempt, and creates a job.",
+"Deploying the job contract": "That deploys a fresh contract on GenLayer.",
+"Fund roof stage with anchor photo": "Next, the payer funds the roof stage in GEN, with an anchor photo of the site.",
+"Funding the escrow": "The money is now locked in escrow.",
+"Issue code": "The payer issues a short code, to be written on the work.",
+"Builder opens the job link": "The builder opens the job link, in a separate browser, with a separate account.",
+"Registering this browser's signing key": "They register a signing key for this job.",
+"Adding attempt credits": "And add credits, to pay the small fee for each attempt.",
+"Live camera": "The photo must come from the live camera. No gallery uploads, and software cameras are refused.",
+"The validator panel is judging": "The code is on the work. Now independent GenLayer validators, each running its own model, decide whether the stage is complete, and the code is visible.",
+"Stage paid": "Both answers are yes. The builder is paid when the result is final. There is no release button.",
+"Payer sees it paid": "The escrow is empty, and the payer never had to approve anything.",
+"end": "Built on GenLayer. Payment follows proof. The camera in this recording was a stand-in feed, and the waits were sped up."
+}

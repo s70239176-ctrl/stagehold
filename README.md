@@ -19,7 +19,7 @@
 
 - **Hosted app:** deploy `web/` on Vercel (see [Deploy](#deploy-the-web-app-on-vercel)) and put the URL here. The app needs no environment variables.
 - **Walkthrough:** [docs/DEMO.md](docs/DEMO.md) is a four-minute script with preparation steps and a troubleshooting table.
-- **Demo video:** [docs/demo/stagehold-demo.mp4](docs/demo/stagehold-demo.mp4), 72 seconds, the full flow on Studionet: create and fund a job, issue a code, register a key, take a live-camera frame, panel verdict, payout. It was recorded in a headless browser with every transaction real; the camera was a stand-in feed of a test photograph with the code drawn on it, and waits between steps are sped up.
+- **Demo video:** [docs/demo/stagehold-demo.mp4](docs/demo/stagehold-demo.mp4), 1 minute 50 seconds with voiceover, the full flow on Studionet: create and fund a job, issue a code, register a key, take a live-camera frame, panel verdict, payout. It was recorded in a headless browser with every transaction real; the camera was a stand-in feed of a test photograph with the code drawn on it, and waits between steps are sped up.
 
 ## Contract details
 
