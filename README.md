@@ -130,7 +130,6 @@ Screenshots are narrow browser-pane captures of the landing page; the drawings a
 - **A photograph is not title.** It shows what is visible, not who owns the land, what materials were used or what is inside a wall.
 - **Studionet is a development network.** Its GEN has no market value, ordinary accounts are not credited there, so payouts are verified through the contract's balance. Judged transactions take 30 to 110 seconds, and the RPC allows about 30 requests a minute per client.
 - **Wallet connection** (EIP-1193) is optional. It was checked with a mock wallet and then by the maintainer with a real browser wallet; the GenLayer Snap is not requested and other wallets are untested. The default is a throwaway browser key.
-- **Site alignment** is implemented but uncalibrated and switched off.
 - **Attestation revocation** is not handled; trust roots are fixed at deploy. The Android app is a draft that has never been compiled or run on a device.
 - Real handwritten codes and real photographs of sites have not been tried on-chain yet.
 
