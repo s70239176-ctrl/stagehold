@@ -38,7 +38,7 @@ fixtures/    manifests and attribution lists (photographs are fetched, not store
 
 **Gate 1 is open.** Preliminary results:
 
-- **Panel:** a single-vendor proxy (three Claude models, run as independent blind judges). No other model families were used.
+- **Panel:** the contract's judges are GenLayer validators. The study ran offline, because the validators' models cannot be chosen here, so it used a single-vendor stand-in (three Claude models, run as independent blind judges). No other model families were used.
 - **Web photographs (15 frames, stage-only):** the judges agreed with each other on 12 of 15. Splits occurred only on genuinely borderline frames (cropped or partly hidden roofs). Two frames first labelled "honest" were rejected by the judges and, on inspection, the judges were right. Those labels were changed afterwards, so the result is indicative only.
 - **Synthetic edits (16 frames, all text drawn by the authors):** all three judges produced the intended outcome on every class: a correct code passes; a wrong code, no code, a code on a separate sheet, dark and cropped frames do not; an "approve" sign in the frame was not obeyed. Splits occurred only on cropped frames and on code answers in frames whose stage failed anyway, and none changed an outcome. Scoring must use the judges' answer files, not their prose summaries, which can misdescribe them.
 - **Not yet tested:** real handwritten codes, real signs, repeated runs, other model families, photographs of real sites, and the stages other than the roof.
