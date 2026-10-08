@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Camera, Check } from "../../components/icons.tsx";
 import { Notice } from "../../components/ui.tsx";
+import { assertLive } from "../../lib/liveness.ts";
 import { cameraProblem, encodeFrame, grabFrame, startCamera, thumbnailPng } from "../../lib/capture.ts";
 
 /** Try the live camera without a job: shows exactly what a builder's shot looks like after encoding. */
@@ -32,6 +33,13 @@ export default function CameraCheck() {
 
   async function snap() {
     if (!video.current) return;
+    try {
+      await assertLive(video.current);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      return;
+    }
+    setError("");
     const canvas = grabFrame(video.current);
     const jpeg = await encodeFrame(canvas);
     const thumb = await thumbnailPng(canvas);
@@ -69,7 +77,7 @@ export default function CameraCheck() {
         {shot ? (
           <div className="card"><div className="card-body stack-sm">
             <div className="row"><Check size={16} /><strong>Frame ready</strong></div>
-            <p className="ink2 small">{shot.w}×{shot.h} captured. Encoded for the contract: {(shot.jpeg / 1024).toFixed(0)} KB JPEG (limit 150 KB) and a {(shot.thumb / 1024).toFixed(0)} KB grayscale thumbnail (limit 30 KB).</p>
+            <p className="ink2 small">Live check passed (software cameras and frozen feeds are refused). {shot.w}×{shot.h} captured. Encoded for the contract: {(shot.jpeg / 1024).toFixed(0)} KB JPEG (limit 150 KB) and a {(shot.thumb / 1024).toFixed(0)} KB grayscale thumbnail (limit 30 KB).</p>
           </div></div>
         ) : null}
         <p className="hint">Ready? <Link href="/builder">Go to the builder page</Link>. The camera card appears once a job link is open and this browser is registered.</p>

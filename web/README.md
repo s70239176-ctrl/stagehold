@@ -33,6 +33,10 @@ A payer-page checkbox creates a clearly labelled **test job** (the contract's `d
 
 Not clicked individually: the builder page's expire button (same contract call as the payer page's).
 
+## Live-camera checks (web only, client side)
+
+Before a frame is kept, the page watches the stream for about a second (`web/lib/liveness.ts`). It refuses cameras whose name says they are software (OBS, ManyCam, virtual cameras) and feeds whose frames do not change, which is what a still image or a stuck loop looks like. Frames come only from the live stream, never from a file picker. These checks raise the effort of faking a capture; they do not authenticate the camera, the contract never sees them, and a virtual camera that adds noise or a renamed device still passes. Verified with unit tests and in the page with a frozen and a changing stand-in stream (frozen refused, changing accepted); not with real hardware.
+
 ## Not verified
 
 - A real phone camera, real handwritten codes, and real photos (the judge gate). The browser pane has no camera, so every browser test used a stand-in camera stream installed in the page context.

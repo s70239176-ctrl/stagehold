@@ -7,6 +7,7 @@ import { Arrow, Camera, Check, Clock, Cross, Info } from "../../components/icons
 import { useToast } from "../../components/Toast.tsx";
 import { addressFor, loadOrCreateKey, savedWallet, adoptWallet } from "../../lib/accounts.ts";
 import { AccountBar } from "../../components/AccountBar.tsx";
+import { assertLive } from "../../lib/liveness.ts";
 import { encodeFrame, grabFrame, startCamera, thumbnailPng } from "../../lib/capture.ts";
 import { readAttempt, sendTx } from "../../lib/chain.ts";
 import { CAPTURE_NOTICE, humanSeconds, stageLabel } from "../../lib/config.ts";
@@ -129,8 +130,17 @@ export default function BuilderPage() {
     }
   }
 
-  function snap() {
+  async function snap() {
     if (!video.current) return;
+    setBusy("Checking the camera is live");
+    try {
+      await assertLive(video.current);
+    } catch (e) {
+      toast.push({ kind: "bad", title: "Not accepted as a live frame", body: e instanceof Error ? e.message : String(e) });
+      return;
+    } finally {
+      setBusy("");
+    }
     const c = grabFrame(video.current);
     frame.current = c;
     setFrameUrl(c.toDataURL("image/jpeg", 0.7));
@@ -274,7 +284,7 @@ export default function BuilderPage() {
                   </ul>
                   <div className="spread">
                     <div className="row">
-                      {!cameraOn ? <button className="btn btn-secondary" disabled={!!busy} onClick={() => void begin()}><Camera size={16} /> Start camera</button> : frameUrl ? <button className="btn btn-secondary" disabled={!!busy} onClick={retake}>Retake</button> : <button className="shutter" aria-label="Take picture" disabled={!!busy} onClick={snap} />}
+                      {!cameraOn ? <button className="btn btn-secondary" disabled={!!busy} onClick={() => void begin()}><Camera size={16} /> Start camera</button> : frameUrl ? <button className="btn btn-secondary" disabled={!!busy} onClick={retake}>Retake</button> : <button className="shutter" aria-label="Take picture" disabled={!!busy} onClick={() => void snap()} />}
                     </div>
                     <button className="btn btn-primary" disabled={!!busy || !frameUrl || !registered || !hasCode} onClick={() => void run(submit)}>Submit to the panel <Arrow size={16} /></button>
                   </div>

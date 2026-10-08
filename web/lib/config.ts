@@ -26,4 +26,4 @@ export const when = (unix: number): string =>
   new Date(unix * 1000).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 
 export const CAPTURE_NOTICE =
-  "This web version cannot verify that a photograph came from a live camera. A gallery photo or a generated image looks the same to the contract. An attested mobile capture app is planned before any real value is used.";
+  "Web capture is live-camera only (no gallery uploads, software cameras and frozen feeds are refused) but is not device-attested, so a determined faker could still get through. Attested capture arrives with the mobile app before mainnet.";

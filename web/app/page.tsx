@@ -124,7 +124,7 @@ export default function Home() {
           <div className="grid-3" style={{ marginTop: 30 }}>
             <div className="feature">
               <h3>It cannot verify the camera</h3>
-              <p>The web version cannot prove a photograph came from a live camera. An attested mobile capture app is planned before real value is used.</p>
+              <p>The web version takes live-camera frames only and checks for software cameras and frozen feeds, but it cannot prove the camera is genuine. An attested mobile capture app is planned before mainnet.</p>
             </div>
             <div className="feature">
               <h3>A photograph is not title</h3>

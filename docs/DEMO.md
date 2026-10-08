@@ -65,7 +65,7 @@ On a separate **test job** (the **Advanced: test timing** option on the payer pa
 
 State these plainly; they are part of the design, not an afterthought.
 
-- The web version cannot prove that a photograph came from a live camera. A gallery photo or a generated image looks the same to the contract. An attested mobile capture app is planned before real value is used.
+- The web version takes live-camera frames only and refuses software cameras and frozen feeds, but it cannot prove the camera is genuine: a virtual camera that adds noise still passes. An attested mobile capture app is planned before real value is used.
 - A photograph shows what is visible. It says nothing about title to the land, materials used or what is inside a wall.
 - Studionet is a development network. Its GEN has no market value, and ordinary accounts are not credited, so payouts are shown through the contract's own balance.
 - The panel has been tried on a small set of photographs and synthetic edits with a single model family. A study with real photographs and several model families is the next gate.
