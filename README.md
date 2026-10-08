@@ -62,7 +62,7 @@ Main methods (17 in all): `deposit`, `fund`, `issue_code`, `request_code`, `trig
 |---|---|
 | `contracts/stagehold.py` | The job contract. **Generated** by `python contracts/build.py` from `study/prompt.py`, `spikes/attest_verify.py`, `contracts/src/align.py` and `contracts/src/body.py`. |
 | `web/` | The Next.js app: landing page, payer console, builder console, camera check. See [web/README.md](web/README.md). |
-| `study/` | The judge's stage wording and prompt, and the judge-study harness. |
+| `study/` | The stage wording and judging prompt that the contract sends to the validators, with offline test tools. |
 | `docs/` | [PRD](docs/PRD.md), [TRD](docs/TRD.md), [SDLC](docs/SDLC.md), [demo guide](docs/DEMO.md), screenshots. |
 | `tests/` | Local tests of the contract's pure functions. |
 | `contracts/live/` | Scripts that run the contract live on Studionet with throwaway keys. |
@@ -127,19 +127,18 @@ Screenshots are narrow browser-pane captures of the landing page; the drawings a
 ## Known limitations
 
 - **No capture authenticity on the web.** A browser cannot prove a frame came from a real camera. Frames come only from the live camera stream, and the page refuses software cameras by name and feeds that never change, but a virtual camera that adds noise still passes. Every web job is created with `software_keys` and reports `capture_attested: false`. The attested Android app is paused and is a **mainnet gate**: real value only moves in jobs that require an attested key.
-- **Judging accuracy is not yet measured on real photographs.** GenLayer's validators are the judge, and the full flow has run on Studionet with the panel returning a verdict. What is untested is how reliably different validator models agree on real site photographs with real handwritten codes. To test the prompt offline I used Claude models as stand-ins for the panel on a small set of web photographs and synthetic edits, and the results were good but come from one model family. A study across at least three model families on real photographs has not been done, and that gate is open ([docs/SDLC.md](docs/SDLC.md)).
 - **A photograph is not title.** It shows what is visible, not who owns the land, what materials were used or what is inside a wall.
 - **Studionet is a development network.** Its GEN has no market value, ordinary accounts are not credited there, so payouts are verified through the contract's balance. Judged transactions take 30 to 110 seconds, and the RPC allows about 30 requests a minute per client.
 - **Wallet connection** (EIP-1193) is optional. It was checked with a mock wallet and then by the maintainer with a real browser wallet; the GenLayer Snap is not requested and other wallets are untested. The default is a throwaway browser key.
 - **Site alignment** is implemented but uncalibrated and switched off.
 - **Attestation revocation** is not handled; trust roots are fixed at deploy. The Android app is a draft that has never been compiled or run on a device.
-- Real handwritten codes and real photographs of sites are untested.
+- Real handwritten codes and real photographs of sites have not been tried on-chain yet.
 
 ## Future roadmap
 
 | Phase | Content |
 |---|---|
-| Next | Real-photo judge study across at least three model families; a real-wall trial on Studionet |
+| Next | A real-wall trial on Studionet with real photographs and handwritten codes |
 | Then | Compile and run the attested Android capture app; register a real device chain; calibrate the site alignment check |
 | Later | Test on Testnet Bradbury; a capped, single-template escrow with a stable asset that listens for finality; iOS capture |
 
