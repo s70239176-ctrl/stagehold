@@ -2,7 +2,7 @@
 //   A. cancel: needs both parties; refunds unpaid stages; stranger rejected; credits withdrawable
 //   B. expire: rejected early, works after expiry, refunds the payer
 //   C. silent payer: request_code -> early fallback rejected -> fallback after the window -> builder is paid anyway
-// Payout/refund is verified via the contract's own balance (Studionet does not credit ordinary accounts).
+// Payout/refund is verified via the contract's own balance here; live_accounts.mjs checks the recipients' accounts.
 //
 //   node contracts/live/live_paths.mjs [A] [B] [C]      (default: all)
 import { createRequire } from "node:module";

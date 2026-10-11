@@ -100,4 +100,4 @@ A generated image is a file. A real defense is to refuse any file that did not c
 | Payer silence blocks a code | Builder-triggered fallback code after the payer window. |
 | Photographs are public on-chain | The anchor is a small grayscale thumbnail; use non-sensitive sites only. |
 | Certificate revocation not handled | Trust roots are fixed at deploy; a consensus-checked revocation fetch is a later option. |
-| This test network does not credit ordinary accounts | Payouts are verified through the contract's own balance; re-check on a network that tracks accounts. |
+| Payouts must reach people's accounts | The contract pays with the SDK's plain send (`emit_transfer` does not reach ordinary accounts on Studionet); payouts, refunds and burns were verified arriving in the accounts. Re-check on any other network |

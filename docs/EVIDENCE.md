@@ -1,6 +1,6 @@
 # Stagehold: end-to-end evidence on Studionet
 
-Recorded 2026-10-11 by `evidence/run.mjs` against the deployed frontend **https://stagehold-cr.vercel.app**, in a headless browser, with throwaway accounts. Every transaction below is real and can be opened on the [Studionet explorer](https://explorer-studio.genlayer.com). The money checks compare the contract's own balance with the expected figure after each step, because this network does not credit ordinary accounts.
+Recorded 2026-10-11 by `evidence/run.mjs` against the deployed frontend **https://stagehold-cr.vercel.app**, in a headless browser, with throwaway accounts. Every transaction below is real and can be opened on the [Studionet explorer](https://explorer-studio.genlayer.com). Payer and builder are made known to Studionet with `sim_fundAccount` (5 and 1 GEN), so every debit and credit is read in the accounts themselves as well as in the contract.
 
 ## What was and was not real
 
@@ -17,255 +17,279 @@ True handwritten codes on a photographed wall have not been tried. To run the sa
 
 ## pass: Real-photo flow: wrong code is refused (fee burned), right code passes, builder paid at finality
 
-Job contract: [`0xd936e7B80053294F74857cD88A8E4C97d7a40aD6`](https://explorer-studio.genlayer.com/address/0xd936e7B80053294F74857cD88A8E4C97d7a40aD6), payer `0xfFFA1f52d2f95c981058483896dAC27114Ff4bc3`, builder `0xD6D9A300E339BB05B425201cBBAa6A1F6C1E5B18`
+Job contract: [`0xE1a39029cB484DDb3360bD944BE5a50e28314382`](https://explorer-studio.genlayer.com/address/0xE1a39029cB484DDb3360bD944BE5a50e28314382), payer `0x6743DB02aa2C644d885912AF9FcD2E6FD228eaeF`, builder `0x514320806E80af47F33ed03356F64B3913CdC30a`
 
 | Result | Check | Figures |
 |---|---|---|
-| pass | job deployed through the frontend | contract=0xd936e7B80053294F74857cD88A8E4C97d7a40aD6 dev_mode=false capture_attested=false |
+| pass | job deployed through the frontend | contract=0xE1a39029cB484DDb3360bD944BE5a50e28314382 dev_mode=false capture_attested=false |
+| pass | the payer and builder accounts are known to Studionet and funded (payer 5 GEN, builder 1 GEN) | payer account 5 GEN, builder account 1 GEN |
+| pass | funding debits the payer's account by exactly the stage amount | account 5 GEN -> 4.5 GEN (expected 4.5 GEN) |
 | pass | payer funds 0.5 GEN: escrow holds it | contract balance 0.5 GEN stage funded 0.5 GEN |
 | pass | payer issues the code | code=TREE BLUE |
+| pass | buying credits debits the builder's account by exactly the credits | account 1 GEN -> 0.9 GEN (expected 0.9 GEN) |
 | pass | builder registers a key and buys 0.1 GEN of attempt credits | balance 0.6 GEN keys=1 credits=0.1 GEN |
+| pass | the refused attempt's fee is burned: the burn address is credited exactly the fee | account 38.638 GEN -> 38.648 GEN (expected 38.648 GEN) |
 | pass | wrong code on the wall: the panel refuses, nothing is paid, the fee is burned | verdict={"stage_met":"yes","code_visible":"no","same_site":"yes","site_aligned":true,"paid":false,"attempt":1} stage=OPEN credits=0.09 GEN contract balance 0.59 GEN |
 | pass | right code on the wall: the panel passes the stage; payout waits for finality | verdict={"stage_met":"yes","code_visible":"yes","same_site":"yes","site_aligned":true,"paid":true,"attempt":2} stage=SETTLING |
+| pass | at finality the builder's ACCOUNT is credited the stage amount, exactly once | account 0.9 GEN -> 1.4 GEN (expected 1.4 GEN) |
 | pass | finality: the contract pays the builder the stage amount, exactly once | job=DONE stage=PAID contract balance 0.08 GEN then 0.08 GEN (0.1 credits - 2 fees = 0.08 GEN) |
 | pass | books balance: balance = liabilities, no surplus | {"balance":"80000000000000000","liabilities":"80000000000000000","surplus":"0"} |
 | pass | the frontend shows the result and the completed job | builder page text contains the verdict and completion notice |
 | pass | all 8 transactions made through the frontend reached FINALIZED with GenVM SUCCESS | status FINALIZED, execution SUCCESS on each |
 | pass | 1 contract self-calls triggered (the finalized payouts) reached FINALIZED | SUCCESS |
-| info | 3 outbound value transfers (fee burns, payouts, refunds) were recorded by Studionet | each reached FINALIZED; Studionet runs a transfer to an ordinary account as a call to a contract that does not exist, so the record says ERROR: Contract 0x… not found. The contract's balance is debited exactly as checked above; the recipient account is not credited on this network. |
+| pass | 3 outbound value transfers (payouts, refunds, fee burns) finalized as plain sends with no GenVM error | FINALIZED no GenVM run, FINALIZED no GenVM run, FINALIZED no GenVM run; the recipients' account balances above show each one arriving |
 
 Transactions made through the frontend:
 
 | Step | Transaction | Status | GenVM | Validators (votes) | Output |
 |---|---|---|---|---|---|
-| deploy | [`0xaa1d41d8…73296e`](https://explorer-studio.genlayer.com/tx/0xaa1d41d86ef62e5a166009fcf5ebbb079bf8ec71aecc6dfe7e1ff358fe73296e) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
-| deposit+fund | [`0xf9726b25…cb75b0`](https://explorer-studio.genlayer.com/tx/0xf9726b255fe9859278cd46ccc821307254c9bd76d51cad6b0c5c8707bacb75b0) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
-| deposit+fund | [`0xda59b4c9…f76033`](https://explorer-studio.genlayer.com/tx/0xda59b4c9de68c24c4687849d5a2a99e93216290fea87b96a98c15aa398f76033) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×4, idle×1) |  |
-| issue_code | [`0x81a669aa…40a5e0`](https://explorer-studio.genlayer.com/tx/0x81a669aa8a0153ad8de5b29f8a15d73e019c312f053b331b1edd47a26540a5e0) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
-| register+credits | [`0x4609e5df…15e8a0`](https://explorer-studio.genlayer.com/tx/0x4609e5df693ea082fcaf5a9736c03afa522de7885c7297471fe6e80e5915e8a0) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
-| register+credits | [`0x9fa304a8…ca1483`](https://explorer-studio.genlayer.com/tx/0x9fa304a8d7d696a7f590fb62ca9cc27d5ec2a599b92343aca3482280ecca1483) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
-| submit (wrong code) | [`0x6615a040…7c48a7`](https://explorer-studio.genlayer.com/tx/0x6615a040e78d7b8ad3f6a642b8b4219bb507de9e8ddf7257467b40682b7c48a7) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (disagree×1, agree×3, idle×1) | {"stage_met": "yes", "code_visible": "no", "same_site": "yes", "site_aligned": true, "paid": false, "attempt": |
-| submit (right code) | [`0x8cfe1627…62275b`](https://explorer-studio.genlayer.com/tx/0x8cfe16275114a78c0afc683701da48c78fb2838c28b0011b183a973a9e62275b) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, disagree×2) | {"stage_met": "yes", "code_visible": "yes", "same_site": "yes", "site_aligned": true, "paid": true, "attempt": |
+| deploy | [`0x96c8757f…3e3e4c`](https://explorer-studio.genlayer.com/tx/0x96c8757f5708edbef67c221821099ca52c2843ca476e8304ca449c0aae3e3e4c) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
+| deposit+fund | [`0x7f97dc18…320b9a`](https://explorer-studio.genlayer.com/tx/0x7f97dc189b6240495afa90dba3d70781d6c1c37eddc6af243b89a13787320b9a) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| deposit+fund | [`0x0e9d3345…1e6aea`](https://explorer-studio.genlayer.com/tx/0x0e9d33450376a6f27268306dc0e4e3916f368f2169bb88263046a6e7de1e6aea) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| issue_code | [`0x18bf0798…1e4b49`](https://explorer-studio.genlayer.com/tx/0x18bf07989ce001e67a0913df885e81241a6379bea883546652f162f3501e4b49) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| register+credits | [`0xed7e1614…41aef7`](https://explorer-studio.genlayer.com/tx/0xed7e16145ce131b5365834c7d20d0b65884553b31979fc3abf781e0e1141aef7) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| register+credits | [`0xdf89782a…477918`](https://explorer-studio.genlayer.com/tx/0xdf89782a9d37883c5780268dc920e7207e4389a063591b35bfea93ff43477918) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| submit (wrong code) | [`0xd4383e8f…d7a214`](https://explorer-studio.genlayer.com/tx/0xd4383e8f9cfde56b6f26eaa155c4f31c4ba9671bb1a89176b48f4580d6d7a214) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) | {"stage_met": "yes", "code_visible": "no", "same_site": "yes", "site_aligned": true, "paid": false, "attempt": |
+| submit (right code) | [`0x7f806018…0ee53c`](https://explorer-studio.genlayer.com/tx/0x7f806018f6148801e0b4e4470961c51f6114392b09ca0b3121be1747eb0ee53c) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) | {"stage_met": "yes", "code_visible": "yes", "same_site": "yes", "site_aligned": true, "paid": true, "attempt": |
 
 Messages the transactions triggered (finalized payouts, fee burns, refunds and payouts). Each is a transaction of its own:
 
 | Triggered by | Message | Transaction | Status | GenVM | Note |
 |---|---|---|---|---|---|
-| submit (wrong code) | transfer of 10000000000000000 wei | [`0x67875136…68a9bf`](https://explorer-studio.genlayer.com/tx/0x67875136c5d89851cb196007c0fa775aa89fe52671c4a0674d9acb54b368a9bf) | FINALIZED | ERROR | Contract 0x000000000000000000000000000000000000dEaD not found |
-| submit (right code) | transfer of 10000000000000000 wei | [`0xa0a23336…8b62cd`](https://explorer-studio.genlayer.com/tx/0xa0a23336365f57c5ecfc335329acc612e44b59d66b81e03bcdbb88b0248b62cd) | FINALIZED | ERROR | Contract 0x000000000000000000000000000000000000dEaD not found |
-| submit (right code) | contract call (finalize_stage) | [`0x18ead7d5…cb64bf`](https://explorer-studio.genlayer.com/tx/0x18ead7d56a0d6cf3dcc89139fd58e4ed6adb8ee2b6910ae870abf881a2cb64bf) | FINALIZED | SUCCESS |  |
-| submit (right code) | transfer of 500000000000000000 wei | [`0x3922ed29…254f46`](https://explorer-studio.genlayer.com/tx/0x3922ed29a93bfe93245d90801b7fa7903d4dd5462d3049379f7f8da713254f46) | FINALIZED | ERROR | Contract 0xD6D9A300E339BB05B425201cBBAa6A1F6C1E5B18 not found |
-
-Final state: job `DONE`, contract balance 80000000000000000 wei, accounting {"balance":"80000000000000000","liabilities":"80000000000000000","surplus":"0"}.
-
-## recover: Real-photo flow on a test job: wrong code, right code, payout, and a payout recovery click
-
-Job contract: [`0xbC50b6A68bb4e19A724Ef51587ac7BF9a9077AE9`](https://explorer-studio.genlayer.com/address/0xbC50b6A68bb4e19A724Ef51587ac7BF9a9077AE9), payer `0xcAFd25398179cF3AF33C749169e1B2D59EACb24A`, builder `0xAA3346d688eb82127df3B7e48693b3AbcF016597`
-
-| Result | Check | Figures |
-|---|---|---|
-| pass | job deployed through the frontend | contract=0xbC50b6A68bb4e19A724Ef51587ac7BF9a9077AE9 dev_mode=true capture_attested=false |
-| pass | payer funds 0.5 GEN: escrow holds it | contract balance 0.5 GEN stage funded 0.5 GEN |
-| pass | payer issues the code | code=TREE BLUE |
-| pass | builder registers a key and buys 0.1 GEN of attempt credits | balance 0.6 GEN keys=1 credits=0.1 GEN |
-| pass | wrong code on the wall: the panel refuses, nothing is paid, the fee is burned | verdict={"stage_met":"yes","code_visible":"no","same_site":"yes","site_aligned":true,"paid":false,"attempt":1} stage=OPEN credits=0.09 GEN contract balance 0.59 GEN |
-| pass | right code on the wall: the panel passes the stage; payout waits for finality | verdict={"stage_met":"yes","code_visible":"yes","same_site":"yes","site_aligned":true,"paid":true,"attempt":2} stage=SETTLING |
-| pass | frontend offers 'Payment is late: recover it' while the stage is SETTLING, and it was clicked | retry of the finalized payout sent through the frontend |
-| pass | finality: the contract pays the builder the stage amount, exactly once | job=DONE stage=PAID contract balance 0.08 GEN then 0.08 GEN (0.1 credits - 2 fees = 0.08 GEN) |
-| pass | books balance: balance = liabilities, no surplus | {"balance":"80000000000000000","liabilities":"80000000000000000","surplus":"0"} |
-| pass | the frontend shows the result and the completed job | builder page text contains the verdict and completion notice |
-| pass | all 8 transactions made through the frontend reached FINALIZED with GenVM SUCCESS | status FINALIZED, execution SUCCESS on each |
-| pass | 1 contract self-calls triggered (the finalized payouts) reached FINALIZED | SUCCESS |
-| info | 3 outbound value transfers (fee burns, payouts, refunds) were recorded by Studionet | each reached FINALIZED; Studionet runs a transfer to an ordinary account as a call to a contract that does not exist, so the record says ERROR: Contract 0x… not found. The contract's balance is debited exactly as checked above; the recipient account is not credited on this network. |
-
-Transactions made through the frontend:
-
-| Step | Transaction | Status | GenVM | Validators (votes) | Output |
-|---|---|---|---|---|---|
-| deploy | [`0x6b0e8800…64a550`](https://explorer-studio.genlayer.com/tx/0x6b0e88008cd2a31986e93151fd1cbc1510dcda3f96068969058bec24f364a550) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
-| deposit+fund | [`0xf3f5eea2…977bdd`](https://explorer-studio.genlayer.com/tx/0xf3f5eea213564cbb0e73f063068eb3c13e989fd592db46dcd5b27a28aa977bdd) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
-| deposit+fund | [`0xcabdd626…98fbfc`](https://explorer-studio.genlayer.com/tx/0xcabdd6263d77ef26369a33cbf1ab37d0c257c42e66a75d06fd70248ca298fbfc) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
-| issue_code | [`0x355bb67e…3eca94`](https://explorer-studio.genlayer.com/tx/0x355bb67ea3a9a31d1355d210ae2621fc9070d8980b100873ad3b6cbcfb3eca94) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
-| register+credits | [`0xd9d7a7e0…5ae743`](https://explorer-studio.genlayer.com/tx/0xd9d7a7e0d8cebad0af58c3a2b9602a57a06a1c3a17f4da88f117138f815ae743) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
-| register+credits | [`0xcf40a437…b708db`](https://explorer-studio.genlayer.com/tx/0xcf40a4372a1fb3c2e28fca5025c61526981d846bbc0d1fe3dbb43cb91db708db) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
-| submit (wrong code) | [`0xac09c902…eb081a`](https://explorer-studio.genlayer.com/tx/0xac09c902b71020512178062993ee49e05afd7bebdbf5a753d36dfcfbe5eb081a) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) | {"stage_met": "yes", "code_visible": "no", "same_site": "yes", "site_aligned": true, "paid": false, "attempt": |
-| submit (right code) | [`0x552f6af4…1c037c`](https://explorer-studio.genlayer.com/tx/0x552f6af4c98f398dfa0292ddaad349db92e5ea08c160379f073ef594c21c037c) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×1, disagree×1) | {"stage_met": "yes", "code_visible": "yes", "same_site": "yes", "site_aligned": true, "paid": true, "attempt": |
-
-Messages the transactions triggered (finalized payouts, fee burns, refunds and payouts). Each is a transaction of its own:
-
-| Triggered by | Message | Transaction | Status | GenVM | Note |
-|---|---|---|---|---|---|
-| submit (wrong code) | transfer of 10000000000000000 wei | [`0xe156911e…8fe4eb`](https://explorer-studio.genlayer.com/tx/0xe156911eb61803b60d3895c81968d6f259c197d2fa02575622250e7e888fe4eb) | FINALIZED | ERROR | Contract 0x000000000000000000000000000000000000dEaD not found |
-| submit (right code) | transfer of 10000000000000000 wei | [`0x37e3ac40…d483a5`](https://explorer-studio.genlayer.com/tx/0x37e3ac4005010a0d593fe13e1bf820e5568e25b395f57ea53e3ed8aa17d483a5) | FINALIZED | ERROR | Contract 0x000000000000000000000000000000000000dEaD not found |
-| submit (right code) | contract call (finalize_stage) | [`0x8ac82dd6…6d7287`](https://explorer-studio.genlayer.com/tx/0x8ac82dd6135ca3c147753311c17dabcb7ffa34d061a3c3c273c0b97dfe6d7287) | FINALIZED | SUCCESS |  |
-| submit (right code) | transfer of 500000000000000000 wei | [`0x4eb0abaa…3436cb`](https://explorer-studio.genlayer.com/tx/0x4eb0abaa470e94ef961428e4a4b6b6f1bf4b2a1c44bbef58982339cbd03436cb) | FINALIZED | ERROR | Contract 0xAA3346d688eb82127df3B7e48693b3AbcF016597 not found |
+| submit (wrong code) | transfer of 10000000000000000 wei | [`0xf8ea4b06…8713a5`](https://explorer-studio.genlayer.com/tx/0xf8ea4b06b534fd860755a76bef4bd70682f6164a743083e5792b2018d48713a5) | FINALIZED |  |  |
+| submit (right code) | transfer of 10000000000000000 wei | [`0x8dcd4dea…f8bab4`](https://explorer-studio.genlayer.com/tx/0x8dcd4dead803519de7503856290999aa82ae0e8ca354abc1849af29491f8bab4) | FINALIZED |  |  |
+| submit (right code) | contract call (finalize_stage) | [`0x54f407e7…2ab727`](https://explorer-studio.genlayer.com/tx/0x54f407e7b1b4124ed16b34647f72ec56a1084d08d654be8260b862f8292ab727) | FINALIZED | SUCCESS |  |
+| submit (right code) | transfer of 500000000000000000 wei | [`0x5d6b2117…78f786`](https://explorer-studio.genlayer.com/tx/0x5d6b21171219937de54c52ee7e3898f58197dac181abbaf57d9515d05578f786) | FINALIZED |  |  |
 
 Final state: job `DONE`, contract balance 80000000000000000 wei, accounting {"balance":"80000000000000000","liabilities":"80000000000000000","surplus":"0"}.
 
 ## cancel: Cancellation needs both parties and refunds the payer; stray funds from a failed transaction are reclaimable
 
-Job contract: [`0x0E30b71025ad44773847cDFD8e4Ddbb2FD94a2Fc`](https://explorer-studio.genlayer.com/address/0x0E30b71025ad44773847cDFD8e4Ddbb2FD94a2Fc), payer `0xbC7Ea2Acc27d3432456409b9b187bE4749470377`, builder `0x46Ce35B1010681bE0E6683dB609cB2270F80fdA1`
+Job contract: [`0xA17FE74CF5a02AE08168032655e35624622D51C1`](https://explorer-studio.genlayer.com/address/0xA17FE74CF5a02AE08168032655e35624622D51C1), payer `0xFC843C9EBa8Fb9cD83B961c663b3339C304EE865`, builder `0x57819DFf66428e28ccC5150E636228b45BBcb8B2`
 
 | Result | Check | Figures |
 |---|---|---|
+| pass | the payer and builder accounts are known to Studionet and funded (payer 5 GEN, builder 1 GEN) | payer account 5 GEN, builder account 1 GEN |
 | pass | setup: 0.5 GEN in escrow, 0.05 GEN of credits | contract balance 0.55 GEN |
+| pass | the payer's account was debited the 0.5 GEN | account 5 GEN -> 4.5 GEN (expected 4.5 GEN) |
+| pass | the builder's account was debited the 0.05 GEN of credits | account 1 GEN -> 0.95 GEN (expected 0.95 GEN) |
+| pass | the builder's account was debited the stray 0.007 GEN | account 0.95 GEN -> 0.943 GEN (expected 0.943 GEN) |
 | pass | a failed payable transaction keeps its value, and the contract accounts for it as surplus | contract balance 0.557 GEN surplus 0.007 GEN |
 | pass | payer cancelling alone refunds nothing | status=ACTIVE contract balance 0.557 GEN |
 | pass | builder cancels too: the job is CANCELLED and the unpaid stage is refunded | status=CANCELLED contract balance 0.057 GEN (credits 0.05 + stray 0.007; the 0.5 GEN left for the payer) |
+| pass | the refund reaches the payer's ACCOUNT: the whole 0.5 GEN is back | account 4.5 GEN -> 5 GEN (expected 5 GEN) |
 | pass | the frontend shows the stray funds to the payer | notice with the exact amount and a Reclaim button |
 | pass | payer reclaims exactly the stray 0.007 GEN; the builder's credits are untouched | contract balance 0.05 GEN surplus 0 |
+| pass | the reclaimed stray value reaches the payer's ACCOUNT (0.5 refund + 0.007) | account 5 GEN -> 5.007 GEN (expected 5.007 GEN) |
 | pass | builder withdraws the unused credits: the contract ends at exactly 0 | contract balance 0 GEN |
+| pass | the withdrawn credits reach the builder's ACCOUNT (only the stray 0.007 GEN is missing) | account 0.943 GEN -> 0.993 GEN (expected 0.993 GEN) |
 | pass | all 9 transactions made through the frontend reached FINALIZED with GenVM SUCCESS | status FINALIZED, execution SUCCESS on each |
-| info | 3 outbound value transfers (fee burns, payouts, refunds) were recorded by Studionet | each reached FINALIZED; Studionet runs a transfer to an ordinary account as a call to a contract that does not exist, so the record says ERROR: Contract 0x… not found. The contract's balance is debited exactly as checked above; the recipient account is not credited on this network. |
+| pass | 3 outbound value transfers (payouts, refunds, fee burns) finalized as plain sends with no GenVM error | FINALIZED no GenVM run, FINALIZED no GenVM run, FINALIZED no GenVM run; the recipients' account balances above show each one arriving |
 
 Transactions made through the frontend:
 
 | Step | Transaction | Status | GenVM | Validators (votes) | Output |
 |---|---|---|---|---|---|
-| deploy | [`0x2b20c491…3b26b4`](https://explorer-studio.genlayer.com/tx/0x2b20c491908e44164862df494ef6d90bc299e5dc1c72849dacadbe1bfb3b26b4) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
-| deposit+fund | [`0xf44eacc2…5d7247`](https://explorer-studio.genlayer.com/tx/0xf44eacc293f4aa2833bab7a98c6ccc2b2982de18da8c86496f83da863c5d7247) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
-| deposit+fund | [`0x94bb24f9…9aabeb`](https://explorer-studio.genlayer.com/tx/0x94bb24f97f2609596ab3c3801d88699c165d1b0ff0d0d380c87f2e33889aabeb) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
-| register+credits | [`0xaea6ac6d…649405`](https://explorer-studio.genlayer.com/tx/0xaea6ac6d7b3b6e85d56e1c4307c81744aefad5b6027478c60b98ed22b9649405) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×4, idle×1) |  |
-| register+credits | [`0xff996785…58fb67`](https://explorer-studio.genlayer.com/tx/0xff99678583f74e034cfa2e1ecbd653887f141b28bb0ffd5eb29fff474958fb67) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
-| stray value: builder sends 0.007 GEN to payer-only deposit() | [`0xa6d4f1a5…46b873`](https://explorer-studio.genlayer.com/tx/0xa6d4f1a55355bb8b03485950338513c864cd3b46baed87324f342f804346b873) | FINALIZED MAJORITY_AGREE | ERROR | 5 (agree×4, idle×1) |  |
-| payer cancel | [`0x325afa32…2ff372`](https://explorer-studio.genlayer.com/tx/0x325afa3234188fc2092c75cf2df353d24b4735d3dfeaf3e036ab0839442ff372) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
-| builder cancel | [`0xbe996b1d…06521d`](https://explorer-studio.genlayer.com/tx/0xbe996b1def73f6c6b8d53e7b6d1a3984dd54553cb0a75dc02435321a5106521d) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
-| reclaim_surplus | [`0xc217c440…e734b2`](https://explorer-studio.genlayer.com/tx/0xc217c4401adaced56fa84ae2e59bd33eb70a5f99096a18015831b57f85e734b2) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
-| withdraw_credits | [`0xd818113d…f8a257`](https://explorer-studio.genlayer.com/tx/0xd818113da190b8e8fdd0e93e610dd4e3545b4c064719d1a4ef51d40367f8a257) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| deploy | [`0x746001ee…d84171`](https://explorer-studio.genlayer.com/tx/0x746001eed75b9984c5f9836cbee8cc50b6849db8049c0dccbacaa3a26cd84171) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
+| deposit+fund | [`0xceed0b5f…d6fd49`](https://explorer-studio.genlayer.com/tx/0xceed0b5f912bc07f816eb600c345411d66b33482ff92c3158b5537abf4d6fd49) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| deposit+fund | [`0x791a26e6…3ee3ae`](https://explorer-studio.genlayer.com/tx/0x791a26e621d9297f3bdd6d199d0a266fa563e9d8032586bfde2b6114e83ee3ae) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
+| register+credits | [`0x88805bca…21b25b`](https://explorer-studio.genlayer.com/tx/0x88805bca9a7f2a917db9ebb4af2be67360e9677cb754c5bc7efcbd905c21b25b) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| register+credits | [`0xa6f75217…4f6a36`](https://explorer-studio.genlayer.com/tx/0xa6f75217d81961e07f855eb967679a640bc32928067b91b4b9885759a74f6a36) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
+| stray value: builder sends 0.007 GEN to payer-only deposit() | [`0xc344cd20…24c9df`](https://explorer-studio.genlayer.com/tx/0xc344cd2046f943362e4ee687e87f33a6c7db0bc940c45fed9662af96fe24c9df) | FINALIZED MAJORITY_AGREE | ERROR | 5 (agree×3, idle×2) |  |
+| payer cancel | [`0x3e102ab2…9f86bc`](https://explorer-studio.genlayer.com/tx/0x3e102ab20b268f50ecbb63ceea0381f7e9dcca93469a34c68cca3ec8db9f86bc) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
+| builder cancel | [`0xf85d57c4…88aff9`](https://explorer-studio.genlayer.com/tx/0xf85d57c44f8058b60dd73437594104a0238381ad5c42157adad383462e88aff9) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| reclaim_surplus | [`0xb057d372…b6c2b4`](https://explorer-studio.genlayer.com/tx/0xb057d3724c474d4176ba688b84ddf3510fa079d3782229a23141f5350db6c2b4) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| withdraw_credits | [`0x7e50c4ce…85e9bb`](https://explorer-studio.genlayer.com/tx/0x7e50c4cef2c5abd11019ddfbe7541bf82e25fea2c03f3fcb4c091d261585e9bb) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
 
 Messages the transactions triggered (finalized payouts, fee burns, refunds and payouts). Each is a transaction of its own:
 
 | Triggered by | Message | Transaction | Status | GenVM | Note |
 |---|---|---|---|---|---|
-| builder cancel | transfer of 500000000000000000 wei | [`0x9c6e4397…771c94`](https://explorer-studio.genlayer.com/tx/0x9c6e43979f88c86919704fc1b94f5f863da41dc11dd7a326b9ad48947d771c94) | FINALIZED | ERROR | Contract 0xbC7Ea2Acc27d3432456409b9b187bE4749470377 not found |
-| reclaim_surplus | transfer of 7000000000000000 wei | [`0x0e87f332…7266b0`](https://explorer-studio.genlayer.com/tx/0x0e87f3322f11b12caba7ab44bee950448dd27de30d443619462a3523827266b0) | FINALIZED | ERROR | Contract 0xbC7Ea2Acc27d3432456409b9b187bE4749470377 not found |
-| withdraw_credits | transfer of 50000000000000000 wei | [`0xf7ad09d7…7d98cb`](https://explorer-studio.genlayer.com/tx/0xf7ad09d718804eb8bebf9991f375931b0dc8b205a03acee0ac598cb7ff7d98cb) | FINALIZED | ERROR | Contract 0x46Ce35B1010681bE0E6683dB609cB2270F80fdA1 not found |
+| builder cancel | transfer of 500000000000000000 wei | [`0x565870a8…7fe42e`](https://explorer-studio.genlayer.com/tx/0x565870a8265efda97138b4120efb28023e14d95e58967092889025da217fe42e) | FINALIZED |  |  |
+| reclaim_surplus | transfer of 7000000000000000 wei | [`0xbd2fe187…f10b70`](https://explorer-studio.genlayer.com/tx/0xbd2fe1876f5b09d21924f4aa8327adc87d32cb21eff6e1b3ff51f32e5af10b70) | FINALIZED |  |  |
+| withdraw_credits | transfer of 50000000000000000 wei | [`0x9b91451c…f51251`](https://explorer-studio.genlayer.com/tx/0x9b91451c9bc8f1368ffee7326219efc42f34c2c85dd4cb53725ce3bc4bf51251) | FINALIZED |  |  |
 
 Final state: job `CANCELLED`, contract balance 0 wei, accounting {"balance":"0","liabilities":"0","surplus":"0"}.
 
 ## expire: A job past its deadline can be expired by the payer, who is refunded
 
-Job contract: [`0xc3d84be63CE60B373c577bD924e9B6b6e781701b`](https://explorer-studio.genlayer.com/address/0xc3d84be63CE60B373c577bD924e9B6b6e781701b), payer `0xD513c7D3363647A59891006c1759D0A80137d55D`, builder `0x13F0a0Aea9cD08f60b505abbbfa49776e56F2395`
+Job contract: [`0x59D883610C219e68b55d6577118ab2664B090b8a`](https://explorer-studio.genlayer.com/address/0x59D883610C219e68b55d6577118ab2664B090b8a), payer `0x3919A6c7F2CF169b2395F8Bf05353126e9c425F6`, builder `0xE00e7F4fd445C4b62c2eB15021f5A7e8f88516C9`
 
 | Result | Check | Figures |
 |---|---|---|
-| pass | funded: 0.5 GEN in escrow | expires_at=1791745264 |
+| pass | the payer and builder accounts are known to Studionet and funded (payer 5 GEN, builder 1 GEN) | payer account 5 GEN, builder account 1 GEN |
+| pass | funded: 0.5 GEN in escrow | expires_at=1791757336 |
+| pass | the payer's account was debited the 0.5 GEN | account 5 GEN -> 4.5 GEN (expected 4.5 GEN) |
 | pass | before the deadline the frontend does not offer Expire | button present=false |
 | pass | after the deadline the payer expires the job: status EXPIRED, the full 0.5 GEN leaves the contract | status=EXPIRED contract balance 0 GEN |
+| pass | the refund reaches the payer's ACCOUNT: the whole 0.5 GEN is back | account 4.5 GEN -> 5 GEN (expected 5 GEN) |
 | pass | all 4 transactions made through the frontend reached FINALIZED with GenVM SUCCESS | status FINALIZED, execution SUCCESS on each |
-| info | 1 outbound value transfers (fee burns, payouts, refunds) were recorded by Studionet | each reached FINALIZED; Studionet runs a transfer to an ordinary account as a call to a contract that does not exist, so the record says ERROR: Contract 0x… not found. The contract's balance is debited exactly as checked above; the recipient account is not credited on this network. |
+| pass | 1 outbound value transfers (payouts, refunds, fee burns) finalized as plain sends with no GenVM error | FINALIZED no GenVM run; the recipients' account balances above show each one arriving |
 
 Transactions made through the frontend:
 
 | Step | Transaction | Status | GenVM | Validators (votes) | Output |
 |---|---|---|---|---|---|
-| deploy | [`0x486a9be0…ac6f43`](https://explorer-studio.genlayer.com/tx/0x486a9be0cbdf8011882810b03e5652279313f2ae286cc30e9525d6ef23ac6f43) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
-| deposit+fund | [`0xed29ee12…eb016b`](https://explorer-studio.genlayer.com/tx/0xed29ee1243db9520656add4aab3f1a363b21e250ad92515da4bde8ee92eb016b) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
-| deposit+fund | [`0x93b91932…099250`](https://explorer-studio.genlayer.com/tx/0x93b91932a93df7d5a5b69d1af621f38719c9111385ba62cc51fa3cf097099250) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
-| expire | [`0x67be07c8…c79de2`](https://explorer-studio.genlayer.com/tx/0x67be07c87c6429d07000a4d9e37ca67a1ef301c433e6f40e0514442771c79de2) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
+| deploy | [`0x6acaeeac…6bb573`](https://explorer-studio.genlayer.com/tx/0x6acaeeac6e6a589514f8fa66178495b6c1df51584f67d79038e6729bae6bb573) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| deposit+fund | [`0x96795a87…75ffd8`](https://explorer-studio.genlayer.com/tx/0x96795a87cd23b06af1b9148228bb6ca45e079ffd875d066a54e54a8d5975ffd8) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| deposit+fund | [`0xe43f778c…de6d4f`](https://explorer-studio.genlayer.com/tx/0xe43f778cbbf325ad553ca1b74d8921904c500a4b770c66e907e27b8eebde6d4f) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| expire | [`0xc5e4568d…b55337`](https://explorer-studio.genlayer.com/tx/0xc5e4568dfae16447002df2d8f4d931639f7dd108f8524c76f64c7c65e2b55337) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
 
 Messages the transactions triggered (finalized payouts, fee burns, refunds and payouts). Each is a transaction of its own:
 
 | Triggered by | Message | Transaction | Status | GenVM | Note |
 |---|---|---|---|---|---|
-| expire | transfer of 500000000000000000 wei | [`0x7ef8dbca…ceb037`](https://explorer-studio.genlayer.com/tx/0x7ef8dbcadab1515655636bb74fcfe95443a57b278c7a58cd541824e005ceb037) | FINALIZED | ERROR | Contract 0xD513c7D3363647A59891006c1759D0A80137d55D not found |
+| expire | transfer of 500000000000000000 wei | [`0x322ec30f…f34394`](https://explorer-studio.genlayer.com/tx/0x322ec30fc9d5debec1fc2f0788ab5bd85e265803f4893fc0fc35566250f34394) | FINALIZED |  |  |
 
 Final state: job `EXPIRED`, contract balance 0 wei, accounting {"balance":"0","liabilities":"0","surplus":"0"}.
 
-## fallback: The payer never issues a code: after the window the builder unlocks a fallback code and is still paid
+## recover: Real-photo flow on a test job: wrong code, right code, payout, and a payout recovery click
 
-Job contract: [`0x38c6666c7Ec161F7cB3F3803145E9FB3F70E4563`](https://explorer-studio.genlayer.com/address/0x38c6666c7Ec161F7cB3F3803145E9FB3F70E4563), payer `0xe4b5344f50c8774441b8c795733431a0aE9bd991`, builder `0x40657A3B2F43751C6c5546e49a748CFE161d807F`
+Job contract: [`0x0b932E605E1CA27a10cc98fBc4B5b3d4eceDB6F0`](https://explorer-studio.genlayer.com/address/0x0b932E605E1CA27a10cc98fBc4B5b3d4eceDB6F0), payer `0x82AD7EacD1D7eDB683bfCA69c5010f2a07a76A88`, builder `0xF1cc2662F0c4AF1f7925Fd0837Dfb5792E4f7149`
 
 | Result | Check | Figures |
 |---|---|---|
-| pass | builder requests a code; the payer stays silent | request_at=1791746595 |
-| pass | the fallback button is disabled before the payer window passes | disabled=true |
-| pass | after the window the builder unlocks a fallback code | code=RAIN HEN |
-| pass | the shot with the fallback code is judged | verdict={"stage_met":"yes","code_visible":"yes","same_site":"yes","site_aligned":true,"paid":true,"attempt":1} |
-| pass | builder is paid although the payer never acted | job=DONE contract balance 0.09 GEN (credits left 0.09 GEN) |
+| pass | job deployed through the frontend | contract=0x0b932E605E1CA27a10cc98fBc4B5b3d4eceDB6F0 dev_mode=true capture_attested=false |
+| pass | the payer and builder accounts are known to Studionet and funded (payer 5 GEN, builder 1 GEN) | payer account 5 GEN, builder account 1 GEN |
+| pass | funding debits the payer's account by exactly the stage amount | account 5 GEN -> 4.5 GEN (expected 4.5 GEN) |
+| pass | payer funds 0.5 GEN: escrow holds it | contract balance 0.5 GEN stage funded 0.5 GEN |
+| pass | payer issues the code | code=TREE BLUE |
+| pass | buying credits debits the builder's account by exactly the credits | account 1 GEN -> 0.9 GEN (expected 0.9 GEN) |
+| pass | builder registers a key and buys 0.1 GEN of attempt credits | balance 0.6 GEN keys=1 credits=0.1 GEN |
+| pass | the refused attempt's fee is burned: the burn address is credited exactly the fee | account 38.658 GEN -> 38.668 GEN (expected 38.668 GEN) |
+| pass | wrong code on the wall: the panel refuses, nothing is paid, the fee is burned | verdict={"stage_met":"yes","code_visible":"no","same_site":"yes","site_aligned":true,"paid":false,"attempt":1} stage=OPEN credits=0.09 GEN contract balance 0.59 GEN |
+| pass | right code on the wall: the panel passes the stage; payout waits for finality | verdict={"stage_met":"yes","code_visible":"yes","same_site":"yes","site_aligned":true,"paid":true,"attempt":2} stage=SETTLING |
+| pass | frontend offers 'Payment is late: recover it' while the stage is SETTLING, and it was clicked | retry of the finalized payout sent through the frontend |
+| pass | at finality the builder's ACCOUNT is credited the stage amount, exactly once | account 0.9 GEN -> 1.4 GEN (expected 1.4 GEN) |
+| pass | finality: the contract pays the builder the stage amount, exactly once | job=DONE stage=PAID contract balance 0.08 GEN then 0.08 GEN (0.1 credits - 2 fees = 0.08 GEN) |
+| pass | books balance: balance = liabilities, no surplus | {"balance":"80000000000000000","liabilities":"80000000000000000","surplus":"0"} |
+| pass | the frontend shows the result and the completed job | builder page text contains the verdict and completion notice |
 | pass | all 8 transactions made through the frontend reached FINALIZED with GenVM SUCCESS | status FINALIZED, execution SUCCESS on each |
 | pass | 1 contract self-calls triggered (the finalized payouts) reached FINALIZED | SUCCESS |
-| info | 2 outbound value transfers (fee burns, payouts, refunds) were recorded by Studionet | each reached FINALIZED; Studionet runs a transfer to an ordinary account as a call to a contract that does not exist, so the record says ERROR: Contract 0x… not found. The contract's balance is debited exactly as checked above; the recipient account is not credited on this network. |
+| pass | 3 outbound value transfers (payouts, refunds, fee burns) finalized as plain sends with no GenVM error | FINALIZED no GenVM run, FINALIZED no GenVM run, FINALIZED no GenVM run; the recipients' account balances above show each one arriving |
 
 Transactions made through the frontend:
 
 | Step | Transaction | Status | GenVM | Validators (votes) | Output |
 |---|---|---|---|---|---|
-| deploy | [`0xe06b0f3a…30c04b`](https://explorer-studio.genlayer.com/tx/0xe06b0f3a573b87eccc554d684b5868e136b658f318729313162ca5731d30c04b) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
-| deposit+fund | [`0x2273694c…c4954a`](https://explorer-studio.genlayer.com/tx/0x2273694c655c3e10da6f923a06c9738369a8229feabd23a33c2117fdafc4954a) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×4, idle×1) |  |
-| deposit+fund | [`0x4f3eb36d…61e126`](https://explorer-studio.genlayer.com/tx/0x4f3eb36d1cec6114d77ae7b29e98ec28ed70dc5f9cccd4b72a29c36f7f61e126) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×4, idle×1) |  |
-| register+credits | [`0xdd188ad4…bea02e`](https://explorer-studio.genlayer.com/tx/0xdd188ad49cf9004ea714697a03b517df3d38b2bd5d4a98365f70398520bea02e) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
-| register+credits | [`0xdbae6c1e…de82ca`](https://explorer-studio.genlayer.com/tx/0xdbae6c1e74dcafa61ba11ee77652b97bb0edcbaa70a06dd799fbee7486de82ca) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
-| request_code | [`0x15283ba8…857e37`](https://explorer-studio.genlayer.com/tx/0x15283ba88b449695f04f073780bfaaaaf509f4676924e63af1082013ac857e37) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
-| trigger_fallback_code | [`0x1623fc1e…180671`](https://explorer-studio.genlayer.com/tx/0x1623fc1efb1c48043bae550c431a323b0c4645571088b7ecce504dc9db180671) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
-| submit (fallback code) | [`0xe4bb1bff…8faf62`](https://explorer-studio.genlayer.com/tx/0xe4bb1bffc36ea62d1ff4e9522c9fe88d122c858a5d155faa6c374a36aa8faf62) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) | {"stage_met": "yes", "code_visible": "yes", "same_site": "yes", "site_aligned": true, "paid": true, "attempt": |
+| deploy | [`0xc0812871…10293e`](https://explorer-studio.genlayer.com/tx/0xc08128716d2258477bf4a65fda0de3ad0411ffe211288b13a01864fd3710293e) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| deposit+fund | [`0x70025aa7…128973`](https://explorer-studio.genlayer.com/tx/0x70025aa7e71df3b4085be5957df6591b745b56e3dc930bf796678bec06128973) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
+| deposit+fund | [`0x39d13cba…42613e`](https://explorer-studio.genlayer.com/tx/0x39d13cba080013318d7a030af5671bf88939f5075ef0b45c97f20b190742613e) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| issue_code | [`0x7e0d2524…97ca5c`](https://explorer-studio.genlayer.com/tx/0x7e0d25240853bc5be34ef91af6b29149e30dd3847999dc2dc9d1aace2d97ca5c) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×4, idle×1) |  |
+| register+credits | [`0x3435d8fa…5e07df`](https://explorer-studio.genlayer.com/tx/0x3435d8fa3f2fe7863a4fe17254bc14cc769a1eeaed6fdaa99621602a745e07df) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
+| register+credits | [`0xc9ef9789…7ec69c`](https://explorer-studio.genlayer.com/tx/0xc9ef97890f3a242e468d104f2668301d8e81fd502637faf139072ff2907ec69c) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
+| submit (wrong code) | [`0x2fcc1d16…364803`](https://explorer-studio.genlayer.com/tx/0x2fcc1d16f0d4e52172b85ce9fd5d5c243588b26f07f0cfd78572a298ba364803) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, disagree×1, idle×1) | {"stage_met": "yes", "code_visible": "no", "same_site": "yes", "site_aligned": true, "paid": false, "attempt": |
+| submit (right code) | [`0x9bf615e3…fbe116`](https://explorer-studio.genlayer.com/tx/0x9bf615e33317bc4769105045cf92a4d977dbcdced922aadfecd95bfe63fbe116) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) | {"stage_met": "yes", "code_visible": "yes", "same_site": "yes", "site_aligned": true, "paid": true, "attempt": |
 
 Messages the transactions triggered (finalized payouts, fee burns, refunds and payouts). Each is a transaction of its own:
 
 | Triggered by | Message | Transaction | Status | GenVM | Note |
 |---|---|---|---|---|---|
-| submit (fallback code) | contract call (finalize_stage) | [`0x2f587d20…9426a7`](https://explorer-studio.genlayer.com/tx/0x2f587d200190c8199cf14bf1b9bc5f22f0d7f1849b9d419f2fe9b403929426a7) | FINALIZED | SUCCESS |  |
-| submit (fallback code) | transfer of 500000000000000000 wei | [`0xb83398f8…9e4f85`](https://explorer-studio.genlayer.com/tx/0xb83398f8cd8efee09a8a524c1c0ba92378e4fb16c17cb8a13bf3d9a8399e4f85) | FINALIZED | ERROR | Contract 0x40657A3B2F43751C6c5546e49a748CFE161d807F not found |
-| submit (fallback code) | transfer of 10000000000000000 wei | [`0xa983f7cd…40867d`](https://explorer-studio.genlayer.com/tx/0xa983f7cd9f6628b2603a18a78c0a0f98f881742542c945034c4bd7253f40867d) | FINALIZED | ERROR | Contract 0x000000000000000000000000000000000000dEaD not found |
+| submit (wrong code) | transfer of 10000000000000000 wei | [`0xce72a4cf…366b5a`](https://explorer-studio.genlayer.com/tx/0xce72a4cff8eb83e8c638e5caf7308599b2702245fbce2d709b77a33b8c366b5a) | FINALIZED |  |  |
+| submit (right code) | transfer of 10000000000000000 wei | [`0x0b515253…a9f7ed`](https://explorer-studio.genlayer.com/tx/0x0b51525338aa5f1ab4cb7f55411251405b93dc353a130d8cec164f8bc9a9f7ed) | FINALIZED |  |  |
+| submit (right code) | contract call (finalize_stage) | [`0x9df035fa…cc84b9`](https://explorer-studio.genlayer.com/tx/0x9df035fa363dd04f1700580de6402d5897e388e2b35be40acdbee747e0cc84b9) | FINALIZED | SUCCESS |  |
+| submit (right code) | transfer of 500000000000000000 wei | [`0x61b95de0…374a38`](https://explorer-studio.genlayer.com/tx/0x61b95de021fcbc2f41f3e23dae0204e3852d31092b9029ff3feba81761374a38) | FINALIZED |  |  |
+
+Final state: job `DONE`, contract balance 80000000000000000 wei, accounting {"balance":"80000000000000000","liabilities":"80000000000000000","surplus":"0"}.
+
+## fallback: The payer never issues a code: after the window the builder unlocks a fallback code and is still paid
+
+Job contract: [`0x83FeF930F4E5d7A830D4Dd4A6D9E2B25F659BFa7`](https://explorer-studio.genlayer.com/address/0x83FeF930F4E5d7A830D4Dd4A6D9E2B25F659BFa7), payer `0x3932223AAB21a552Fcc645a21646144e631D3365`, builder `0x2Baf1B2A2D061BE4691829fCA99638BEA4E68D11`
+
+| Result | Check | Figures |
+|---|---|---|
+| pass | the payer and builder accounts are known to Studionet and funded (payer 5 GEN, builder 1 GEN) | payer account 5 GEN, builder account 1 GEN |
+| pass | builder requests a code; the payer stays silent | request_at=1791759219 |
+| pass | the fallback button is disabled before the payer window passes | disabled=true |
+| pass | after the window the builder unlocks a fallback code | code=FAN DOOR |
+| pass | the shot with the fallback code is judged | verdict={"stage_met":"yes","code_visible":"yes","same_site":"yes","site_aligned":true,"paid":true,"attempt":1} |
+| pass | the builder's ACCOUNT is credited the stage amount although the payer never acted | account 0.9 GEN -> 1.4 GEN (expected 1.4 GEN) |
+| pass | builder is paid although the payer never acted | job=DONE contract balance 0.09 GEN (credits left 0.09 GEN) |
+| pass | all 8 transactions made through the frontend reached FINALIZED with GenVM SUCCESS | status FINALIZED, execution SUCCESS on each |
+| pass | 1 contract self-calls triggered (the finalized payouts) reached FINALIZED | SUCCESS |
+| pass | 2 outbound value transfers (payouts, refunds, fee burns) finalized as plain sends with no GenVM error | FINALIZED no GenVM run, FINALIZED no GenVM run; the recipients' account balances above show each one arriving |
+
+Transactions made through the frontend:
+
+| Step | Transaction | Status | GenVM | Validators (votes) | Output |
+|---|---|---|---|---|---|
+| deploy | [`0x2910af5d…670304`](https://explorer-studio.genlayer.com/tx/0x2910af5d43e4abd3d7d8506a34ffbbe308924026b5935a7b3d75cfa525670304) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
+| deposit+fund | [`0x8f3e323b…381649`](https://explorer-studio.genlayer.com/tx/0x8f3e323b879994654d339e26dbcbf86451064ecdb3cd304af508c70456381649) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
+| deposit+fund | [`0x99bc34ff…c6348a`](https://explorer-studio.genlayer.com/tx/0x99bc34ff54004a164addfd82dd4427ddabb362bddc190d07cf0de37c0ec6348a) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×4, idle×1) |  |
+| register+credits | [`0xb0f0a851…d187e9`](https://explorer-studio.genlayer.com/tx/0xb0f0a851d03753a226df6764c2c8056ae35b526b38017f2f8c8c3d547bd187e9) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
+| register+credits | [`0xb2650bd7…f8244e`](https://explorer-studio.genlayer.com/tx/0xb2650bd748c78bdcfd14c1b631ec251408da83db20633ff30ab9d20ca8f8244e) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
+| request_code | [`0xd967d908…396e17`](https://explorer-studio.genlayer.com/tx/0xd967d908c8f00caf7f5b8eeabb7264b80f4a3177b445550cd2957e6be0396e17) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
+| trigger_fallback_code | [`0x027efcd6…ed02b9`](https://explorer-studio.genlayer.com/tx/0x027efcd67a133efdb6efa171a9e7c724db3f5aab7584388101cf84c36ced02b9) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| submit (fallback code) | [`0x9e1020ed…492e6c`](https://explorer-studio.genlayer.com/tx/0x9e1020ed8e821916df8173242ce818682a7436ac7eb4c1585c4dc09f45492e6c) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) | {"stage_met": "yes", "code_visible": "yes", "same_site": "yes", "site_aligned": true, "paid": true, "attempt": |
+
+Messages the transactions triggered (finalized payouts, fee burns, refunds and payouts). Each is a transaction of its own:
+
+| Triggered by | Message | Transaction | Status | GenVM | Note |
+|---|---|---|---|---|---|
+| submit (fallback code) | transfer of 10000000000000000 wei | [`0xa6473876…94f2ac`](https://explorer-studio.genlayer.com/tx/0xa64738763f0ee6fb9ebd673cd558ac2bc9880e81ce4a9a9f024237166f94f2ac) | FINALIZED |  |  |
+| submit (fallback code) | contract call (finalize_stage) | [`0x332feadb…a02c71`](https://explorer-studio.genlayer.com/tx/0x332feadb7b916ffb6c4eb98a8e03066b0a05d71fba0cf84d4fd519cf42a02c71) | FINALIZED | SUCCESS |  |
+| submit (fallback code) | transfer of 500000000000000000 wei | [`0xf0b577f4…5290e6`](https://explorer-studio.genlayer.com/tx/0xf0b577f4590f89055a0ac0d81e872743576a6fd81b8fb70cd5aa4b1ff45290e6) | FINALIZED |  |  |
 
 Final state: job `DONE`, contract balance 90000000000000000 wei, accounting {"balance":"90000000000000000","liabilities":"90000000000000000","surplus":"0"}.
 
 ## site: Site check: a later photograph of the same site passes; a photograph of a different site is refused by the validators
 
-Job contract: [`0x9E5C1faF632A8a080B94d9c22d33C88f579534D1`](https://explorer-studio.genlayer.com/address/0x9E5C1faF632A8a080B94d9c22d33C88f579534D1), payer `0x391AFA8791229278D9d3672BEe9f07732fFc53F4`, builder `0xe8459d700D7Ce8be66AB4F54c0a3Ff916f1CF04A`
+Job contract: [`0xadF3e0C0AD4B59baEbB770471eC66586862ea17b`](https://explorer-studio.genlayer.com/address/0xadF3e0C0AD4B59baEbB770471eC66586862ea17b), payer `0xd0174058Db94f292Fa6e548832d07b90dAd1B46D`, builder `0xb5Aae5167bF2896C90B7aDe294024422F1d91a38`
 
 | Result | Check | Figures |
 |---|---|---|
 | pass | the job asks the validators to compare every photograph with the anchor (site check on) | site_check=true alignment_enforced=false |
+| pass | the payer and builder accounts are known to Studionet and funded (payer 5 GEN, builder 1 GEN) | payer account 5 GEN, builder account 1 GEN |
 | pass | payer funds the openings stage with the steel-frame photograph as the anchor | anchor_kind=jpeg stage=openings funded 0.5 GEN |
-| pass | a photograph of a different site, with the right code on its wall: refused for the site, nothing paid, fee burned | verdict={"stage_met":"unclear","code_visible":"yes","same_site":"no","site_aligned":true,"paid":false,"attempt":1} stage=OPEN contract balance 0.59 GEN |
+| pass | a photograph of a different site, with the right code on its wall: refused for the site, nothing paid, fee burned | verdict={"stage_met":"yes","code_visible":"yes","same_site":"no","site_aligned":true,"paid":false,"attempt":1} stage=OPEN contract balance 0.59 GEN |
 | pass | a later photograph of the same site (finished building, same spot): the panel says same site and passes the stage | verdict={"stage_met":"yes","code_visible":"yes","same_site":"yes","site_aligned":true,"paid":true,"attempt":2} stage=SETTLING |
+| pass | the builder's ACCOUNT is credited the stage amount, exactly once | account 0.9 GEN -> 1.4 GEN (expected 1.4 GEN) |
 | pass | finality: the builder is paid exactly once; books balance | job=DONE contract balance 0.08 GEN accounting={"balance":"80000000000000000","liabilities":"80000000000000000","surplus":"0"} |
 | pass | the frontend shows the site result and the site-check badge | result card has a 'Same site as the anchor' row; the job panel says 'Site check on' |
 | pass | all 8 transactions made through the frontend reached FINALIZED with GenVM SUCCESS | status FINALIZED, execution SUCCESS on each |
 | pass | 1 contract self-calls triggered (the finalized payouts) reached FINALIZED | SUCCESS |
-| info | 3 outbound value transfers (fee burns, payouts, refunds) were recorded by Studionet | each reached FINALIZED; Studionet runs a transfer to an ordinary account as a call to a contract that does not exist, so the record says ERROR: Contract 0x… not found. The contract's balance is debited exactly as checked above; the recipient account is not credited on this network. |
+| pass | 3 outbound value transfers (payouts, refunds, fee burns) finalized as plain sends with no GenVM error | FINALIZED no GenVM run, FINALIZED no GenVM run, FINALIZED no GenVM run; the recipients' account balances above show each one arriving |
 
 Transactions made through the frontend:
 
 | Step | Transaction | Status | GenVM | Validators (votes) | Output |
 |---|---|---|---|---|---|
-| deploy | [`0x5c9261ee…da1898`](https://explorer-studio.genlayer.com/tx/0x5c9261eebee06d786c3dc25af92b39d49099be3639b4407fb6a9829878da1898) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
-| deposit+fund | [`0x0291b457…d8d0fc`](https://explorer-studio.genlayer.com/tx/0x0291b45716f2977030ea8b4e1fce063e8261e8eb23f8a84dea59e4e3c2d8d0fc) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
-| deposit+fund | [`0xc32f3a4d…c47678`](https://explorer-studio.genlayer.com/tx/0xc32f3a4d4175b833d9f865d5d4886e6fe932206c9f9adf9918108ed2b2c47678) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
-| issue_code | [`0xc027e585…410eae`](https://explorer-studio.genlayer.com/tx/0xc027e585ff2d87533b82d541baccd09ac4698f3eb81b805703a00b5539410eae) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
-| register+credits | [`0xa214e600…ae3bfb`](https://explorer-studio.genlayer.com/tx/0xa214e6007d8e4ee3bc02012c6273fc95f190041f4e24103984baf081bdae3bfb) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
-| register+credits | [`0xae914bf8…d76c40`](https://explorer-studio.genlayer.com/tx/0xae914bf8e6a850a0cd7c8a2bd6487c9b5c1907ee1d84aeb2519f3976e2d76c40) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
-| submit (different site) | [`0x05e395d1…12828f`](https://explorer-studio.genlayer.com/tx/0x05e395d10f0edd19bc467576c52d2892ce7ff527ae16edc75dcbf58a0c12828f) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) | {"stage_met": "unclear", "code_visible": "yes", "same_site": "no", "site_aligned": true, "paid": false, "attem |
-| submit (same site) | [`0x53f9a2a9…b20fbc`](https://explorer-studio.genlayer.com/tx/0x53f9a2a9f7c37c9d4a242ed6826a5fbf86d872a201fdcb8677127882a3b20fbc) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) | {"stage_met": "yes", "code_visible": "yes", "same_site": "yes", "site_aligned": true, "paid": true, "attempt": |
+| deploy | [`0x5cf4cef6…53ef9e`](https://explorer-studio.genlayer.com/tx/0x5cf4cef63be946fb021b8428d03257438350606e7a0c49b0e93b5dc96553ef9e) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| deposit+fund | [`0xba7bcc15…2bca31`](https://explorer-studio.genlayer.com/tx/0xba7bcc15463bedd53c0b15a3bc67b7cef53fcefb42cb8dd85072cc23d82bca31) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
+| deposit+fund | [`0x1bb2066a…7887cf`](https://explorer-studio.genlayer.com/tx/0x1bb2066a86d0411f97263174460e5d17db1b7f3211ae85c76b0843bb167887cf) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| issue_code | [`0x7e4ede20…be7042`](https://explorer-studio.genlayer.com/tx/0x7e4ede20c9f50899b7bf89686a1efad68515d392d1eedc5b91642092ebbe7042) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
+| register+credits | [`0xb323322d…6449a4`](https://explorer-studio.genlayer.com/tx/0xb323322dd5de0690c2ccf53b50c8dd2a488bb558fff52c62f81f124d586449a4) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| register+credits | [`0x72f8c53e…fbcfe7`](https://explorer-studio.genlayer.com/tx/0x72f8c53e259c6096f48007f37f6c089616b714017388b98f4cb0eeeedafbcfe7) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, idle×2) |  |
+| submit (different site) | [`0x5c9d406c…5fb643`](https://explorer-studio.genlayer.com/tx/0x5c9d406c3c8974af8bf60a8b9457e3553b1235a999ed2ea89f30d1cecf5fb643) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×3, disagree×2) | {"stage_met": "yes", "code_visible": "yes", "same_site": "no", "site_aligned": true, "paid": false, "attempt": |
+| submit (same site) | [`0xb0e917d8…281de8`](https://explorer-studio.genlayer.com/tx/0xb0e917d8492f950682b4a056af2443c44628633837ad49a08d7555f1ee281de8) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×1, agree×3, disagree×1) | {"stage_met": "yes", "code_visible": "yes", "same_site": "yes", "site_aligned": true, "paid": true, "attempt": |
 
 Messages the transactions triggered (finalized payouts, fee burns, refunds and payouts). Each is a transaction of its own:
 
 | Triggered by | Message | Transaction | Status | GenVM | Note |
 |---|---|---|---|---|---|
-| submit (different site) | transfer of 10000000000000000 wei | [`0x106de04b…855717`](https://explorer-studio.genlayer.com/tx/0x106de04bc4f9586d799e4d6eb724efd7f698da33565919e85ce7628fda855717) | FINALIZED | ERROR | Contract 0x000000000000000000000000000000000000dEaD not found |
-| submit (same site) | transfer of 10000000000000000 wei | [`0x3c22fc34…03624b`](https://explorer-studio.genlayer.com/tx/0x3c22fc34c106a340134637f9d4c4fcd17c885cbdadf38229ca7243aaa103624b) | FINALIZED | ERROR | Contract 0x000000000000000000000000000000000000dEaD not found |
-| submit (same site) | contract call (finalize_stage) | [`0x59a7787c…bd21fb`](https://explorer-studio.genlayer.com/tx/0x59a7787c595d628c04f1ea25ccf786592e4acfb56ebaa6bba116a8216bbd21fb) | FINALIZED | SUCCESS |  |
-| submit (same site) | transfer of 500000000000000000 wei | [`0x09d1e767…6ec91a`](https://explorer-studio.genlayer.com/tx/0x09d1e76749b858a29d852b94eb410d0a7963638e347ee2e0cb3d2573046ec91a) | FINALIZED | ERROR | Contract 0xe8459d700D7Ce8be66AB4F54c0a3Ff916f1CF04A not found |
+| submit (different site) | transfer of 10000000000000000 wei | [`0xef387333…dbff07`](https://explorer-studio.genlayer.com/tx/0xef387333b86173c45135aedce24e238494c982d4583f311b1fa61255badbff07) | FINALIZED |  |  |
+| submit (same site) | transfer of 10000000000000000 wei | [`0xa3f4c116…7f2bed`](https://explorer-studio.genlayer.com/tx/0xa3f4c1162f498d6b2b45450172e5779dc7c65792cac76639f82840a61c7f2bed) | FINALIZED |  |  |
+| submit (same site) | contract call (finalize_stage) | [`0x9fdcd2bd…9312af`](https://explorer-studio.genlayer.com/tx/0x9fdcd2bdc0d534a2a1d29bf9e0b5d002bb79c10ac4881899423ee7930c9312af) | FINALIZED | SUCCESS |  |
+| submit (same site) | transfer of 500000000000000000 wei | [`0x50968dd5…84bac4`](https://explorer-studio.genlayer.com/tx/0x50968dd524805243fe7bedc70a6b6205fd8e217ff47cba5273343b318084bac4) | FINALIZED |  |  |
 
 Final state: job `DONE`, contract balance 80000000000000000 wei, accounting {"balance":"80000000000000000","liabilities":"80000000000000000","surplus":"0"}.
 
 ## disclosure: A job created without the site check says so on every page, and the result row reads 'Not checked yet'
 
-Job contract: [`0xc985b63D3539F1B1f6aAbDB795b6Ef7d7d7F65b7`](https://explorer-studio.genlayer.com/address/0xc985b63D3539F1B1f6aAbDB795b6Ef7d7d7F65b7), payer `0xe6E60290B360B858d4bd547F62b3AfA149a73f26`, builder `0xDDD34eCD56C428159C91f0C379c345085C18B382`
+Job contract: [`0xE26C1fe2Ec98AdFa872fddf1B8b44532d7B6164b`](https://explorer-studio.genlayer.com/address/0xE26C1fe2Ec98AdFa872fddf1B8b44532d7B6164b), payer `0xAa2D85c3fa7b8F424Ee0c7Fd9B05701EE747e50E`, builder `0xFc20954dE2A521E1005F2C31AB56F97b134b158B`
 
 | Result | Check | Figures |
 |---|---|---|
 | pass | the job was created with the site check off | site_check=false alignment_enforced=false |
 | pass | the payer page says the site is not checked | job panel badge 'Site not checked' |
-| pass | the builder page says the site is not checked | job panel badge 'Site not checked' on the builder page too (checked on the finished run's job; screenshot results/disclosure-builder.png; the run's own check was looser, so the harness now requires the badge) |
+| pass | the builder page says the site is not checked | job panel badge 'Site not checked' on the builder page too |
 | pass | all 1 transactions made through the frontend reached FINALIZED with GenVM SUCCESS | status FINALIZED, execution SUCCESS on each |
 
 Transactions made through the frontend:
 
 | Step | Transaction | Status | GenVM | Validators (votes) | Output |
 |---|---|---|---|---|---|
-| deploy | [`0x90e6ed86…f6e246`](https://explorer-studio.genlayer.com/tx/0x90e6ed86b315ada883664f8fdb82071e721822470cb0ff7b61262eabc3f6e246) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (agree×5) |  |
+| deploy | [`0x017f3c11…1b44e9`](https://explorer-studio.genlayer.com/tx/0x017f3c1153f29bc21155ac7bd10e2961f65e645f46d79ac62491df38a11b44e9) | FINALIZED MAJORITY_AGREE | SUCCESS | 5 (idle×2, agree×3) |  |
 
 Final state: job `CREATED`, contract balance 0 wei, accounting {"balance":"0","liabilities":"0","surplus":"0"}.
 
@@ -274,12 +298,12 @@ Final state: job `CREATED`, contract balance 0 wei, accounting {"balance":"0","l
 - **Validators (votes):** each transaction was decided by five validators. `agree` is a vote for the leader's result; `idle` is a validator that did not vote in that round, which the protocol tolerates when a majority agrees. A judged `submit` shows the verdict the panel agreed on in the Output column.
 - **Status:** `ACCEPTED` is a decision inside the appeal window; `FINALIZED` is final. Payouts fire only after finality.
 - **Hashes:** each link opens the transaction in the explorer; the full record of each (consensus data, GenVM result) is in `evidence/results/tx/<hash>.json`.
-- The money checks compare the contract's own balance with the expected figure, because Studionet does not credit ordinary accounts.
-- **Value transfers to ordinary accounts** (fee burns, refunds, payouts) are recorded by Studionet as calls to a contract that does not exist, so their GenVM result reads ERROR ("Contract 0x… not found") while the contract's balance is debited exactly as the checks show. Studionet does not credit the recipient account (TRD section 2). The contract's own calls (every method, and the finalized payout self-call) all finish SUCCESS. This is a property of the development network, not of the contract.
+- The money checks read both the contract's balance and the payer's, builder's and burn address's account balances after each step, against the expected figure.
+- **Value transfers** (payouts, refunds, fee burns, reclaims) are plain sends: each is its own transaction of type SEND, finalizes with no GenVM run and no error, and lands only when the transaction that emitted it is FINALIZED. The account checks above show each arriving. (The first version used `emit_transfer`, which ended in a GenVM error and never credited ordinary accounts; see [evidence/transfer_recipients.md](evidence/transfer_recipients.md).)
 - **Every transaction made through the frontend, and every contract call it triggered, reached FINALIZED with GenVM SUCCESS**; the harness waits for that and records a check per flow.
 
 The contract-level tests of the thumbnail check, settlement recovery and failed payable transactions are in [evidence/live_hardening.md](evidence/live_hardening.md).
 
 ## Summary
 
-54 checks passed, 0 failed, 6 informational.
+84 checks passed, 0 failed, 0 informational.

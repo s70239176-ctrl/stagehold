@@ -1,21 +1,51 @@
-# Do outbound transfers reach their recipient on Studionet?
+# Payouts and refunds: the GenVM error, its cause, and the fix
 
-Every Stagehold payout, refund and fee burn is an `emit_transfer` from the job contract. The contract debits exactly what it owes; this page records what Studionet then does with the value, because it decides whether "finalized payouts" can be verified at the recipient.
+## What went wrong
 
-`contracts/live/transfer_recipients.mjs` (with `contracts/live/probe/sender.py` and `sink.py`) deploys a contract that holds a 0.3 GEN deposit and pays 0.1 GEN with the same `emit_transfer` call that Stagehold's `_pay` uses, to three kinds of recipient. Throwaway accounts; an account made known to Studionet with `sim_fundAccount` counts as "funded".
+Stagehold's first payout code used `emit_transfer`, the SDK's way to move native tokens out of a contract. On Studionet every payout, refund and fee burn to an ordinary account then ended in a GenVM error and **never reached the account**:
 
-| Recipient | Recipient balance before, after | Sender contract | Triggered message |
-|---|---|---|---|
-| A contract that accepts transfers (`__receive__`) | 0 GEN to **0.1 GEN: credited** | 0.3 to 0.2 GEN | ACCEPTED, MAJORITY_AGREE, **GenVM SUCCESS** |
-| A funded ordinary account | 1 GEN to 1 GEN: **not credited** | 0.2 to 0.1 GEN | FINALIZED, NO_MAJORITY, **GenVM ERROR** |
+| Recipient of `emit_transfer` | Recipient's balance | Triggered message |
+|---|---|---|
+| A contract that accepts transfers (`__receive__`) | credited | GenVM SUCCESS |
+| A funded ordinary account | not credited (1 GEN stayed 1 GEN) | NO_MAJORITY, GenVM **ERROR**: `Contract 0x… not found` |
+| An unfunded ordinary account | not credited | the same error |
+| The same, with `on="accepted"` instead of the default | not credited | the same error |
+| A funded payer's refund from Stagehold | not credited (4.9 GEN stayed 4.9 GEN) | the same error |
 
-A second observation, with Stagehold itself on a funded payer: `deposit` of 0.1 GEN debited the payer's account (5 to 4.9 GEN) and credited the job contract, as it should. `withdraw_deposit` then debited the contract (0.1 to 0 GEN), but the payer stayed at 4.9 GEN and the triggered message ended `NO_MAJORITY` / `ERROR`.
+The contract debited exactly what it owed, so its own books balanced, but the GEN left the contract and arrived nowhere. Reading the SDK from inside GenVM (a probe contract that prints `inspect.getsource`) showed why: `emit_transfer` posts a message **to a contract**. It is documented as a transfer "that the receiver may catch with `__receive__`". An ordinary account has no contract to run, so Studionet records a failed call.
 
-An unfunded ordinary account behaves the same way in every Stagehold flow recorded in [../EVIDENCE.md](../EVIDENCE.md): the contract's balance falls by exactly the payout, refund or burn, and the message's GenVM result is `ERROR: Contract 0x… not found`. The unfunded case of this probe did not complete in its last run because the network connection dropped; those flows are the evidence for it.
+## The fix
 
-## What this means
+The same SDK has a second way to send value: the EVM-style plain send (`EthSend`, exposed as `gl.evm.contract_interface` in newer SDKs and as `genlayer.gl._internal.eth.evm_contract_interface` in the runtime Studionet uses). It sends native tokens to any address with empty calldata and no contract call. Probed in isolation, the same contract paying through it:
 
-- **The contract's side is correct and verified:** it debits exactly what it owes, once, and a transfer to a contract that accepts transfers is credited with GenVM SUCCESS.
-- **On Studionet, GEN paid to an ordinary account is debited from the contract but never credited to the account.** The network treats the transfer as a call to a contract that does not exist. This is why the evidence checks payouts, refunds and burns against the contract's own balance, and why those messages show GenVM ERROR while every call to the contract itself finishes SUCCESS.
-- **So the web version's payouts and refunds cannot be shown arriving in a person's account on Studionet.** Nothing in the contract can fix that: a builder and a payer sign with their own keys, so neither can be a contract. A network that credits ordinary accounts is needed to verify arrival at the recipient (Bradbury, Asimov or a local network); that has not been done, and no real value should rely on it until it has.
-- The Studionet GEN in all of these tests has no market value.
+| Recipient of the plain send | Recipient's balance | Triggered message |
+|---|---|---|
+| A funded ordinary account | **1.0 to 1.1 GEN, credited** | type SEND, FINALIZED, no GenVM run |
+| An unfunded ordinary account | **0 to 0.1 GEN, credited** | type SEND, FINALIZED, no GenVM run |
+
+It lands only when the transaction that emitted it is FINALIZED (measured: the parent was ACCEPTED for 32 seconds with the recipient at 0, and the recipient was credited when the parent turned FINALIZED), so the "pay only at finality" rule is kept.
+
+`contracts/src/body.py` now pays through it (`_pay`): payouts, refunds, the fee burn and the surplus reclaim all use the plain send. It tries the public name first and falls back to the runtime's.
+
+## Verified in the accounts, on Studionet
+
+`contracts/live/live_accounts.mjs` runs the real contract with a payer (5 GEN) and a builder (1 GEN) made known to Studionet with `sim_fundAccount`, and reads the **accounts**, not just the contract. All passed ([log](live_accounts.log)):
+
+| Step | Result |
+|---|---|
+| Funding a stage | payer account 5 to 4.5 GEN (debited exactly 0.5) |
+| Buying credits | builder account 1 to 0.9 GEN (debited exactly 0.1) |
+| A refused attempt | the burn address credited exactly the 0.01 GEN fee |
+| The panel passes the right code | at finality the **builder's account 0.9 to 1.4 GEN**: the 0.5 GEN stage payout, once; nothing more afterwards |
+| The messages the submit triggered | the payout self-call FINALIZED with GenVM SUCCESS; the transfer FINALIZED, no GenVM run, **no error** |
+| Withdrawing the credits | the remaining 0.08 GEN reached the builder's account (1.48 GEN); contract at 0 |
+| Cancel by both parties | the **payer's account 4.1 to 4.5 GEN**: the whole 0.4 GEN refund |
+| A stray 0.007 GEN left by a failed payable call, then closing and `reclaim_surplus` | the payer's account received the 0.2 GEN refund and the 0.007 GEN reclaimed; contract at 0 |
+
+The through-the-frontend runs in [../EVIDENCE.md](../EVIDENCE.md) now check the payer's and builder's account balances after every financial step in the same way.
+
+## Notes
+
+- Studionet GEN has no market value.
+- A plain send to an address that is a contract with no `__receive__` would fail like any transfer to it; Stagehold's recipients are the payer's and the builder's own accounts.
+- The probes (`contracts/live/transfer_recipients.mjs`, `probe/`) are kept so the behaviour can be re-checked when the network or SDK changes.

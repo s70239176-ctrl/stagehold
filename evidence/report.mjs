@@ -14,7 +14,7 @@ const cell = (s) => String(s ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
 
 let out = `# Stagehold: end-to-end evidence on Studionet
 
-Recorded ${ev.started?.slice(0, 10)} by \`evidence/run.mjs\` against the deployed frontend **${ev.site}**, in a headless browser, with throwaway accounts. Every transaction below is real and can be opened on the [Studionet explorer](${EXPLORER}). The money checks compare the contract's own balance with the expected figure after each step, because this network does not credit ordinary accounts.
+Recorded ${ev.started?.slice(0, 10)} by \`evidence/run.mjs\` against the deployed frontend **${ev.site}**, in a headless browser, with throwaway accounts. Every transaction below is real and can be opened on the [Studionet explorer](${EXPLORER}). Payer and builder are made known to Studionet with \`sim_fundAccount\` (5 and 1 GEN), so every debit and credit is read in the accounts themselves as well as in the contract.
 
 ## What was and was not real
 
@@ -62,8 +62,8 @@ out += [
   "- **Validators (votes):** each transaction was decided by five validators. `agree` is a vote for the leader's result; `idle` is a validator that did not vote in that round, which the protocol tolerates when a majority agrees. A judged `submit` shows the verdict the panel agreed on in the Output column.",
   "- **Status:** `ACCEPTED` is a decision inside the appeal window; `FINALIZED` is final. Payouts fire only after finality.",
   "- **Hashes:** each link opens the transaction in the explorer; the full record of each (consensus data, GenVM result) is in `evidence/results/tx/<hash>.json`.",
-  "- The money checks compare the contract's own balance with the expected figure, because Studionet does not credit ordinary accounts.",
-  "- **Value transfers to ordinary accounts** (fee burns, refunds, payouts) are recorded by Studionet as calls to a contract that does not exist, so their GenVM result reads ERROR (\"Contract 0x… not found\") while the contract's balance is debited exactly as the checks show. Studionet does not credit the recipient account (TRD section 2). The contract's own calls (every method, and the finalized payout self-call) all finish SUCCESS. This is a property of the development network, not of the contract.",
+  "- The money checks read both the contract's balance and the payer's, builder's and burn address's account balances after each step, against the expected figure.",
+  "- **Value transfers** (payouts, refunds, fee burns, reclaims) are plain sends: each is its own transaction of type SEND, finalizes with no GenVM run and no error, and lands only when the transaction that emitted it is FINALIZED. The account checks above show each arriving. (The first version used `emit_transfer`, which ended in a GenVM error and never credited ordinary accounts; see [evidence/transfer_recipients.md](evidence/transfer_recipients.md).)",
   "- **Every transaction made through the frontend, and every contract call it triggered, reached FINALIZED with GenVM SUCCESS**; the harness waits for that and records a check per flow.",
   "",
   "The contract-level tests of the thumbnail check, settlement recovery and failed payable transactions are in [evidence/live_hardening.md](evidence/live_hardening.md).",

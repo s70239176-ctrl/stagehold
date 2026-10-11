@@ -36,7 +36,7 @@ Browser (Next.js) ── genlayer-js ──▶  Stagehold job contract (one per 
 Studionet behaviours that shaped the design:
 
 1. **A transaction that ends in an execution error keeps its attached value in the contract.** Payable methods are therefore trivial deposits that cannot fail; every fallible method is non-payable and works from balances tracked in storage.
-2. **Ordinary accounts are not credited by outbound transfers.** `emit_transfer` lowers the contract's balance, and the triggered message ends in GenVM `ERROR` ("Contract … not found"): the recipient account's balance does not change, funded or not. A contract that accepts transfers is credited, with GenVM `SUCCESS` ([evidence/transfer_recipients.md](evidence/transfer_recipients.md)). Payouts are therefore verified through the contract's own balance, and arrival in a person's account has **not** been verified; it needs a network that credits ordinary accounts.
+2. **`emit_transfer` does not reach ordinary accounts; a plain send does.** `emit_transfer` posts a message to a *contract*, so a payout to an ordinary account ended in GenVM `Contract … not found` and was never credited. Stagehold pays through the SDK's EVM-style plain send (`EthSend`), which credits any address, runs no GenVM and lands only when the emitting transaction is FINALIZED. Verified in the payer's and builder's accounts: [evidence/transfer_recipients.md](evidence/transfer_recipients.md).
 3. **Outbound transfers and state can lag a receipt by tens of seconds.** Clients and tests must poll.
 4. **A panel that cannot agree leaves state unchanged and charges nothing.** The submit went through four consensus rounds (rotating leaders, five validators each) and ended `MAJORITY_DISAGREE`. Random six-letter codes caused this; two common words do not.
 5. A judged transaction takes roughly 30 to 110 seconds. The hosted RPC allows about 30 requests a minute and (observed on 11 October 2026) 500 requests an hour per client, so reads are batched and polling is slow (the pages refresh the job every 20 seconds and follow a transaction every 8 seconds); heavy scripted testing from one address can exhaust the hourly allowance and the pages then show the rate-limit error until it clears.
@@ -228,7 +228,7 @@ With throwaway accounts (logs in `contracts/live/`):
 - Revocation is unhandled; iOS is unimplemented.
 - A panel disagreement is free to retry.
 - Real handwritten codes, other stages (ring beam, blockwork, openings, plaster) and real value are untested.
-- Recipient crediting is unverified because this network does not track ordinary accounts.
+- Recipient crediting is verified on Studionet with funded accounts (payout, refund, fee burn, credit withdrawal and surplus reclaim all arrive to the exact amount), but only on Studionet: a different network should be re-checked.
 
 ## 13. Testing
 

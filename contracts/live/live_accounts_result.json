@@ -3,78 +3,30 @@
     "step": "accounts: payer 5 GEN and builder 1 GEN, known to Studionet",
     "ok": true,
     "detail": "payer 5 GEN builder 1 GEN",
-    "at": "2026-10-11T20:59:57.544Z"
+    "at": "2026-10-11T20:48:43.286Z"
   },
   {
     "step": "A funding debits the payer's account by exactly the stage amount",
     "ok": true,
     "detail": "payer 4.5 GEN contract 0.5 GEN",
-    "at": "2026-10-11T21:00:46.081Z"
+    "at": "2026-10-11T20:49:32.826Z"
   },
   {
     "step": "A buying credits debits the builder's account by exactly the credits",
     "ok": true,
     "detail": "builder 0.9 GEN",
-    "at": "2026-10-11T21:01:33.549Z"
+    "at": "2026-10-11T20:50:20.903Z"
   },
   {
     "step": "A a refused attempt burns its fee: the burn address is credited",
-    "ok": true,
-    "detail": "burn address 0.01 GEN higher; stage OPEN",
-    "at": "2026-10-11T21:02:48.214Z"
+    "ok": false,
+    "detail": "burn address 1e-17 GEN higher; stage OPEN",
+    "at": "2026-10-11T20:55:57.344Z"
   },
   {
-    "step": "A the panel passes the right code; the stage is settling",
-    "ok": true,
-    "detail": "stage SETTLING",
-    "at": "2026-10-11T21:03:28.820Z"
-  },
-  {
-    "step": "A at finality the builder's ACCOUNT is credited the stage amount, once",
-    "ok": true,
-    "detail": "builder 1.4 GEN (1 - 0.1 credits + 0.5 payout = 1.4 GEN)",
-    "at": "2026-10-11T21:04:32.539Z"
-  },
-  {
-    "step": "A nothing more is paid, and the contract holds exactly the unspent credits",
-    "ok": true,
-    "detail": "builder 1.4 GEN; contract 0.08 GEN (0.1 - 2 fees = 0.08)",
-    "at": "2026-10-11T21:05:18.616Z"
-  },
-  {
-    "step": "A the finalized payout and the transfer messages finalized without a GenVM error",
-    "ok": true,
-    "detail": "submit FINALIZED; triggered: transfer FINALIZED no GenVM run (plain send) | call FINALIZED SUCCESS",
-    "at": "2026-10-11T21:05:20.780Z"
-  },
-  {
-    "step": "A withdrawing the credits returns exactly the remainder to the builder's account",
-    "ok": true,
-    "detail": "builder 1.48 GEN; contract 0 GEN",
-    "at": "2026-10-11T21:06:07.976Z"
-  },
-  {
-    "step": "B both parties cancel: the payer's ACCOUNT gets the whole 0.4 GEN back",
-    "ok": true,
-    "detail": "payer 4.1 GEN after funding, 4.5 GEN after the refund; contract 0 GEN",
-    "at": "2026-10-11T21:07:59.132Z"
-  },
-  {
-    "step": "C a failed payable call by the builder keeps 0.007 GEN: debited from the builder, reported as surplus",
-    "ok": true,
-    "detail": "leader ERROR: only the payer; builder 1.473 GEN; accounting {\"balance\":\"207000000000000000\",\"liabilities\":\"200000000000000000\",\"surplus\":\"7000000000000000\"}",
-    "at": "2026-10-11T21:09:21.496Z"
-  },
-  {
-    "step": "C the payer's ACCOUNT receives the refund (0.2) and the reclaimed stray value (0.007)",
-    "ok": true,
-    "detail": "payer 4.507 GEN; contract 0 GEN",
-    "at": "2026-10-11T21:11:06.914Z"
-  },
-  {
-    "step": "contracts used",
-    "ok": null,
-    "detail": "{\"A\":\"0x967970eE797ABE84Ab95eFBcA7F4355869dA4305\",\"B\":\"0x5737524d9F80E507907ee91709cD8B0B3E162Fec\",\"C\":\"0x1C9ad4c560D7468C0101B068b97516Ad9Dbe2A76\"}",
-    "at": "2026-10-11T21:11:06.915Z"
+    "step": "aborted",
+    "ok": false,
+    "detail": "submit wait: gave up",
+    "at": "2026-10-11T21:29:34.922Z"
   }
 ]

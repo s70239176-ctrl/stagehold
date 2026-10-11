@@ -4,7 +4,7 @@
 //   F. a stage stuck SETTLING can be recovered by a retry of the payout without paying twice
 //   G. ... and by direct settlement past the force delay, after which the late original payout is refused
 //   H. an intentionally failed finalized payout (test-job fault injector), then forced recovery; nothing is paid twice
-// Payout/refund is verified via the contract's own balance (Studionet does not credit ordinary accounts).
+// Payout/refund is verified via the contract's own balance here; live_accounts.mjs checks the recipients' accounts.
 //
 //   node contracts/live/live_hardening.mjs [D] [E] [F] [G]      (default: all)
 import { createRequire } from "node:module";

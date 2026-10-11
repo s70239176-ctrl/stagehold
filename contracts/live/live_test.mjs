@@ -245,7 +245,7 @@ for (let i = 0; i < 16 && contractBal !== BigInt(snap.builder_credits); i++) {
   await sleep(15000);
   contractBal = await balanceOf(address);
 }
-// NOTE: Studionet does not credit ordinary accounts (builderBal stays 0), so the payout is verified by the
+// NOTE: this script uses unfunded throwaway accounts (builderBal stays 0), so the payout is verified by the
 // contract's own balance falling to exactly the remaining attempt credits.
 note("payout after finality", !!final && contractBal === BigInt(snap.builder_credits),
   `waited ${Math.round((Date.now() - waitStart) / 1000)}s stage=${snap.stages.roof.status} job=${snap.status} settling=${snap.settling} builderBalance=${builderBal} contractBalance=${contractBal} credits=${snap.builder_credits}`);

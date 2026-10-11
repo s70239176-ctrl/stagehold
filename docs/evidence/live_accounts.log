@@ -1,0 +1,47 @@
+OK   accounts: payer 5 GEN and builder 1 GEN, known to Studionet  payer 5 GEN builder 1 GEN
+=== A. pass: the payout reaches the builder's account ===
+  deployed 0x967970eE797ABE84Ab95eFBcA7F4355869dA4305
+OK   A funding debits the payer's account by exactly the stage amount  payer 4.5 GEN contract 0.5 GEN
+GenLayer RPC error (eth_estimateGas): Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+Gas estimation failed, using default 200_000: UnknownRpcError: An unknown RPC error occurred.
+
+Details: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+Version: viem@2.57.3
+    at withRetry.delay.count.count (file:///C:/UGenLayer RPC error (eth_getTransactionByHash): fetch failed
+GenLayer RPC error (eth_getTransactionByHash): fetch failed
+GenLayer RPC error (eth_getTransactionByHash): fetch failed
+GenLayer RPC error (eth_getTransactionByHash): fetch failed
+lder/web/node_modules/viem/_esm/utils/promise/withRetry.js:24:30) {
+  details: `Unexpected token '<', "<!DOCTYPE "... is not valid JSON`,
+  docsPath: undefined,
+  metaMessages: undefined,
+  shortMessage: 'An unknown RPC error occurred.',
+  version: '2.57.3',
+  code: -1,
+  [cause]: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+      at JSON.parse (<anonymous>)
+      at parseJSONFromBytes (node:internal/deps/undici/undici:4255:19)
+      at successSteps (node:internal/deps/undici/undici:6902:27)
+      at readAllBytes (node:internal/deps/undici/undici:5825:13)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+}
+GenLayer RPC error (eth_getTransactionByHash): Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+OK   A buying credits debits the builder's account by exactly the credits  builder 0.9 GEN
+OK   A a refused attempt burns its fee: the burn address is credited  burn address 0.01 GEN higher; stage OPEN
+OK   A the panel passes the right code; the stage is settling  stage SETTLING
+OK   A at finality the builder's ACCOUNT is credited the stage amount, once  builder 1.4 GEN (1 - 0.1 credits + 0.5 payout = 1.4 GEN)
+OK   A nothing more is paid, and the contract holds exactly the unspent credits  builder 1.4 GEN; contract 0.08 GEN (0.1 - 2 fees = 0.08)
+OK   A the finalized payout and the transfer messages finalized without a GenVM error  submit FINALIZED; triggered: transfer FINALIZED no GenVM run (plain send) | call FINALIZED SUCCESS
+OK   A withdrawing the credits returns exactly the remainder to the builder's account  builder 1.48 GEN; contract 0 GEN
+=== B. cancel: the refund reaches the payer's account ===
+  deployed 0x5737524d9F80E507907ee91709cD8B0B3E162Fec
+GenLayer RPC error (eth_getTransactionByHash): fetch failed
+OK   B both parties cancel: the payer's ACCOUNT gets the whole 0.4 GEN back  payer 4.1 GEN after funding, 4.5 GEN after the refund; contract 0 GEN
+=== C. surplus: the reclaimed stray value reaches the payer's account ===
+  deployed 0x1C9ad4c560D7468C0101B068b97516Ad9Dbe2A76
+GenLayer RPC error (eth_getTransactionByHash): fetch failed
+OK   C a failed payable call by the builder keeps 0.007 GEN: debited from the builder, reported as surplus  leader ERROR: only the payer; builder 1.473 GEN; accounting {"balance":"207000000000000000","liabilities":"200000000000000000","surplus":"7000000000000000"}
+GenLayer RPC error (eth_getBalance): fetch failed
+OK   C the payer's ACCOUNT receives the refund (0.2) and the reclaimed stray value (0.007)  payer 4.507 GEN; contract 0 GEN
+INFO contracts used  {"A":"0x967970eE797ABE84Ab95eFBcA7F4355869dA4305","B":"0x5737524d9F80E507907ee91709cD8B0B3E162Fec","C":"0x1C9ad4c560D7468C0101B068b97516Ad9Dbe2A76"}
+done

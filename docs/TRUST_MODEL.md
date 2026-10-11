@@ -11,7 +11,7 @@ What you have to trust, what the contract enforces on its own, and what an attac
 | **Builder** | Photograph the work and write the code | Prove the photograph is live (see below) |
 | **The contract** | Hold the money and follow its rules | Nothing: its rules are public and testable |
 | **Web host (Vercel)** | Serve the page that makes and signs transactions | In sandbox mode the browser keys are throwaway test keys; a compromised host could read them. Use a wallet for anything you care about |
-| **Studionet** | Run the contract | Hold value: its GEN has no market value, and it does not credit ordinary accounts, so payouts are checked through the contract's balance |
+| **Studionet** | Run the contract | Hold value: its GEN has no market value. Payouts and refunds are plain sends and arrive in the recipients' accounts there (verified), but a different network should be re-checked |
 
 ## What the contract enforces by itself
 
