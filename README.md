@@ -30,7 +30,7 @@
 | Chain ID | `61999` |
 | Explorer | https://explorer-studio.genlayer.com |
 | Contract source | [`contracts/stagehold.py`](contracts/stagehold.py) (generated; see below) |
-| Reference deployment | [`0xFd14458AE0fD0CAd05d6020a2fcd81EDe293D75B`](https://explorer-studio.genlayer.com/address/0xFd14458AE0fD0CAd05d6020a2fcd81EDe293D75B): a completed job from the end-to-end evidence run (wrong code refused, right code passed, stage paid), made through the deployed site with the current contract |
+| Reference deployment | [`0x9E5C1faF632A8a080B94d9c22d33C88f579534D1`](https://explorer-studio.genlayer.com/address/0x9E5C1faF632A8a080B94d9c22d33C88f579534D1): a completed job from the end-to-end evidence run (a different site refused by the validators, the same site later passed, stage paid), made through the deployed site with the current contract |
 
 **One contract per job.** Stagehold deploys a fresh contract for every job, from the payer page, so there is no single address the app depends on. The reference deployment above is a finished job with throwaway accounts, kept so reviewers can read a live contract and its history on the explorer, for example `get_snapshot` and `get_attempt`. To run the real flow, create your own job in the app; the job's address appears in the job panel and in the builder link (`/builder?job=0x…`).
 

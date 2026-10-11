@@ -238,6 +238,8 @@ With throwaway accounts (logs in `contracts/live/`):
 | JPEG reader | `tests/test_jpegdc.py`: block averages against Pillow's decoder for 4:2:0, 4:4:4, grayscale, odd sizes and restart intervals; progressive, truncated and garbage input refused |
 | Money paths in process | `tests/test_recovery.py`: a fake runtime runs the generated contract through payout retry, direct settlement, late and duplicate payout messages, cancel and expire after recovery, production timing, stray value and the accounting identity |
 | Contract on Studionet | `contracts/live/live_test.mjs` (main flow), `live_paths.mjs` (cancel, expire, silent payer) and `live_hardening.mjs` (thumbnail check, failed payable transactions, settlement recovery) |
+| Site verification | `calibration/` (26 pairs of genuine photographs: the deterministic alignment's calibration and the validators' same-site answers, asked twice) and `contracts/live/live_site.mjs`; results in [SITE_VERIFICATION.md](SITE_VERIFICATION.md) |
+| Realistic photographs | `calibration/build_photo_cases.py` and `run_judge_probe.mjs`: eleven genuine photographs through the real validators ([PHOTO_TESTS.md](PHOTO_TESTS.md)) |
 | Deployed frontend | `evidence/run.mjs`: the flows through the deployed site in a headless browser, with transaction hashes, validator judgments and balance checks ([EVIDENCE.md](EVIDENCE.md)) |
 | Web app | `web`: `npm test` (signature conversion against Node's verifier, message layout, word list equals the contract's), typecheck, build, and browser runs |
 | Attestation | `spikes/test_attest_verify.py` against Google's published sample chains, including tamper and malformed cases |

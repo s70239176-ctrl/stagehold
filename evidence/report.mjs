@@ -22,12 +22,12 @@ Recorded ${ev.started?.slice(0, 10)} by \`evidence/run.mjs\` against the deploye
 |---|---|
 | Frontend | The deployed site, driven like a user: every button click and form field |
 | Contract, validators, GenVM, consensus, payouts, refunds | Real, on Studionet. Validators judged the frames; the votes and GenVM results are in \`evidence/results/tx/\` |
-| Photograph | A real construction-site photograph (Wikimedia Commons, CC BY-SA 4.0; credits in \`fixtures/web2/ATTRIBUTION.csv\`) |
-| Codes on the wall | **Simulated lettering**: a handwriting-style font with jitter, blur and wear drawn onto the photograph. It is not a human hand writing on a real wall |
+| Photographs | Genuine construction-site photographs from Wikimedia Commons (credits in \`fixtures/web2/ATTRIBUTION.csv\` and \`fixtures/sites/ATTRIBUTION.csv\`): a mud house with an iron-sheet roof (the stage flows), and for the site flow the Highland Colour Coaters extension as a steel frame (the anchor) and finished (the later photograph of the same site), plus a different site (a colonial brick house). All pass through the site's own camera and signing code |
+| Codes on the wall | **Simulated lettering**: a handwriting-style font with jitter, blur and wear drawn onto the photograph (a dark marker on the white wall of the finished building). It is not a human hand writing on a real wall |
 | Camera | A canvas stream of that picture installed as the browser's camera, because a headless browser has no camera |
 | Money | Studionet GEN, which has no market value |
 
-True handwritten codes on a photographed wall have not been tried. To run the same flows on your own photographs: \`USER_SCENES=/folder node evidence/run.mjs pass\` with JPEGs named after the codes (see \`evidence/README.md\`).
+True handwritten codes on a photographed wall have not been tried. To run the same flows on your own photographs: \`USER_SCENES=/folder node evidence/run.mjs pass site\` with JPEGs named after the codes (see \`evidence/README.md\`). Eleven photographs are also put through the real validators in [PHOTO_TESTS.md](PHOTO_TESTS.md), and the site check is calibrated in [SITE_VERIFICATION.md](SITE_VERIFICATION.md).
 
 `;
 
