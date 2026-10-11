@@ -1,0 +1,22 @@
+[
+ {
+  "k": "sink contract (accepts transfers)",
+  "v": "0xe1da38a488C384d08788de2A99ee792C9869dC21"
+ },
+ {
+  "k": "sender contract (holds the deposit)",
+  "v": "0xC36dbedb23b90CDD102939E05238c378fde66e7f"
+ },
+ {
+  "k": "sender balance after a 0.3 GEN deposit",
+  "v": "0.3 GEN"
+ },
+ {
+  "k": "pay 0.1 GEN to a contract that accepts transfers (sink)",
+  "v": "recipient 0 GEN -> 0.1 GEN (CREDITED); sender now 0.2 GEN; triggered message: ACCEPTED MAJORITY_AGREE GenVM SUCCESS"
+ },
+ {
+  "k": "pay 0.1 GEN to a funded ordinary account",
+  "v": "recipient 1 GEN -> 1 GEN (not credited); sender now 0.1 GEN; triggered message: FINALIZED NO_MAJORITY GenVM ERROR"
+ }
+]
