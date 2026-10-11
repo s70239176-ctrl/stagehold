@@ -83,6 +83,23 @@ stub.allow_storage = lambda c: c
 stub.gl = gl
 sys.modules["genlayer"] = stub
 
+# the contract pays people through the SDK's EVM-style plain send; give the fake runtime that module
+def _evm_contract_interface(decl):
+    class _Proxy:
+        def __init__(self, address):
+            self.address = address
+
+        def emit_transfer(self, **kw):
+            EVENTS.append(("transfer", self.address.as_hex.lower(), int(kw["value"])))
+    return _Proxy
+
+
+_SENDS = []
+for _name in ("genlayer.gl", "genlayer.gl._internal", "genlayer.gl._internal.eth"):
+    sys.modules[_name] = types.ModuleType(_name)
+sys.modules["genlayer.gl._internal.eth"].evm_contract_interface = _evm_contract_interface
+
+
 src = open(os.path.join(ROOT, "contracts", "stagehold.py"), encoding="utf-8").read()
 ns = {}
 exec(compile(src, "stagehold.py", "exec"), ns)

@@ -1027,6 +1027,26 @@ J_EXPIRED = "EXPIRED"
 J_DONE = "DONE"
 
 
+# Paying a person. emit_transfer sends a message that must reach a contract, so on Studionet a payout to an
+# ordinary account ended in a GenVM "Contract ... not found" error and was never credited. An EVM-style plain
+# send (EthSend) is the SDK's own way to send native tokens to any address: the recipient is credited, there is no
+# GenVM run, and it lands only once the transaction that emitted it is FINALIZED (measured on Studionet).
+# `gl.evm.contract_interface` is its public name in newer SDKs; this runtime exposes it under _internal.
+try:
+    from genlayer.gl.evm import contract_interface as _evm_interface
+except ImportError:
+    from genlayer.gl._internal.eth import evm_contract_interface as _evm_interface
+
+
+@_evm_interface
+class _Recipient:
+    class View:
+        pass
+
+    class Write:
+        pass
+
+
 def _fail(message):
     raise gl.vm.UserError(message)
 
@@ -1214,7 +1234,7 @@ class Stagehold(gl.Contract):
 
     def _pay(self, to_hex, amount):
         if amount > 0:
-            gl.get_contract_at(Address(to_hex)).emit_transfer(value=u256(amount))
+            _Recipient(Address(to_hex)).emit_transfer(value=u256(amount))
 
     def _refund_unpaid(self):
         total = 0
