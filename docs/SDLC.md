@@ -74,6 +74,16 @@ The judges are GenLayer validators: the protocol selects the panel for each tran
 | Test failed payable transactions so attached GEN is not unaccounted for | Surplus accounting and `reclaim_surplus`; failed payable calls were exercised live (payer-only and builder-only payables, a non-payable method) | `tests/test_recovery.py`; live run E; the `cancel` run of [EVIDENCE.md](EVIDENCE.md) |
 | Successful end-to-end evidence with real construction photographs and handwritten codes, validator judgments, GenVM execution, finalized payouts, cancellation, expiration, refunds, correct financial changes, through the deployed frontend | Run through the deployed frontend: pass (wrong code refused first), recover, cancel with stray-fund reclaim, expire, silent-payer fallback, each with transaction hashes, votes, GenVM result and balance checks against expected figures. **Codes were simulated lettering on a real construction-site photograph, not a human hand**; a real wall with handwriting remains to be done | [EVIDENCE.md](EVIDENCE.md), `evidence/` |
 
+## 7.1 Response to the second steward review
+
+| Request | What was done | Evidence |
+|---|---|---|
+| Calibrate and test the existing alignment mechanism with genuine photographs from matching and unrelated sites | The deterministic alignment was calibrated on 26 pairs of genuine photographs (12 same site, 14 unrelated): it cannot separate them (AUC 0.57), so it stays off. A panel-based same-site question was added, enforced by default on web jobs, and calibrated on the same pairs, asked twice with real validators: 0 of 28 unrelated answers accepted, 18 of 24 same-site answers accepted | [SITE_VERIFICATION.md](SITE_VERIFICATION.md), `calibration/`; live test `contracts/live/live_site.mjs`; the `site` flow in [EVIDENCE.md](EVIDENCE.md) |
+| Keep the frontend disclosing when site verification is not enforced | **Site check on** / **Site not checked** on every job panel; the result row reads the validators' answer or *Not checked yet*; a job can be created without the check and the `disclosure` flow shows every page saying so | [EVIDENCE.md](EVIDENCE.md) (`disclosure`) |
+| Additional realistic photographic tests; clarify the trust limits | Eleven genuine photographs through the real validators with expectations set beforehand; the site pairs; every frontend flow on a genuine photograph. Codes are still simulated lettering, which is stated everywhere; the harnesses accept the user's own handwritten photographs. The trust limits are written out party by party | [PHOTO_TESTS.md](PHOTO_TESTS.md), [TRUST_MODEL.md](TRUST_MODEL.md) |
+| Demonstrate the forced-recovery path after an intentionally failed finalized payout, and that a delayed original payout cannot settle twice | A test-job-only fault injector (`dev_set_fault`) makes the finalized payout fail on purpose. Live: the original payout fails, a retry fails, past the force delay the stage is settled directly, the retried message later pays nothing, the builder is paid once. The same recovery without the injector, with the late original refused, was also captured | `contracts/live/live_hardening.mjs` paths G and H, [evidence/live_hardening.md](evidence/live_hardening.md); `tests/test_recovery.py` |
+| Every relevant transaction reaches successful GenVM finalization; balances correct | The evidence harness now waits until every transaction and every message it triggered is FINALIZED and checks the GenVM result. Outbound value transfers to ordinary accounts are recorded by Studionet as failed calls to a contract that does not exist, while the contract's balance is debited; this is explained where it appears | [EVIDENCE.md](EVIDENCE.md) |
+
 ## 8. Definition of done
 
 - [x] Gate 2: scripted failures and invariants pass on Studionet
@@ -91,4 +101,5 @@ The judges are GenLayer validators: the protocol selects the panel for each tran
 - [x] Live link: https://stagehold-cr.vercel.app/
 - [x] Demo video recorded ([demo/stagehold-demo.mp4](demo/stagehold-demo.mp4), 1 min 50 s with voiceover; script in [DEMO.md](DEMO.md))
 - [x] End-to-end evidence through the deployed frontend ([EVIDENCE.md](EVIDENCE.md))
-- [ ] Real-wall trial with true handwritten codes (gate 3): needs photographs from a real wall; `evidence/run.mjs` accepts them
+- [ ] Real-wall trial with true handwritten codes (gate 3): needs photographs from a real wall; `evidence/run.mjs` and `calibration/` accept them
+- [x] Site verification calibrated on genuine photographs ([SITE_VERIFICATION.md](SITE_VERIFICATION.md))

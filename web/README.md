@@ -4,6 +4,10 @@ Two mobile pages on top of `contracts/stagehold.py`: **/payer** (create the job,
 
 > **WEB MODE has no capture authenticity.** A browser cannot prove a photo came from a live camera, so a gallery photo or a generated image cannot be told apart from a live frame. Every web job is created with `software_keys`, the snapshot says `capture_attested: false`, the builder's capture card shows a notice, the job panel shows a "Capture not verified" badge, and every page footer says so. Studionet GEN has no market value. The attested Android app is paused on the roadmap as a **mainnet gate**.
 
+## Site check
+
+The payer page sends a colour JPEG anchor (at most 100 KB, 640 px) and, by default, creates the job with the site check on: the validators compare each frame with the anchor. Every job panel shows **Site check on** or **Site not checked**, and the builder's result card has a *Same site as the anchor* row (the validators' answer, or *Not checked yet*). The builder camera's thumbnail is built from the encoded JPEG so the contract can verify the two are the same picture. See [../docs/SITE_VERIFICATION.md](../docs/SITE_VERIFICATION.md).
+
 ## Design
 
 Graphite and warm white with one blue accent (`#6bb6d8`), Geist and Geist Mono, a visible 12-column grid, sharp rectangles and thin borders. The landing page (`app/page.tsx`, `components/landing.tsx`, `components/Plate.tsx`) is a set of editorial bands: method (scroll-driven), project schedule, evidence, independent panel, escrow, limits. Its drawings, figures and the 3 of 3 panel are original illustrations labelled as samples, not data from a real project or the chain; there is no stock photography. The payer and builder consoles keep their logic and are restyled through the same tokens in `app/globals.css`. Motion respects `prefers-reduced-motion`.

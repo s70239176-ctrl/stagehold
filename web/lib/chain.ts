@@ -127,7 +127,7 @@ export async function sendTx(
   onPhase?.("pending");
   const started = Date.now();
   while (Date.now() - started < 15 * 60 * 1000) {
-    await sleep(6000);
+    await sleep(8000);
     const tx = (await paced(() =>
       (client as unknown as RawRequest).request({ method: "eth_getTransactionByHash", params: [hash] }),
     )) as RawTx | null;

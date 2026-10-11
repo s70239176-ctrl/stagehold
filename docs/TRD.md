@@ -39,7 +39,7 @@ Studionet behaviours that shaped the design:
 2. **Ordinary accounts are not credited or debited.** `emit_transfer` lowers the contract's balance but a recipient account's balance stays 0. Payouts are verified through the contract's own balance. Recipient crediting must be re-checked on a network that tracks accounts.
 3. **Outbound transfers and state can lag a receipt by tens of seconds.** Clients and tests must poll.
 4. **A panel that cannot agree leaves state unchanged and charges nothing.** The submit went through four consensus rounds (rotating leaders, five validators each) and ended `MAJORITY_DISAGREE`. Random six-letter codes caused this; two common words do not.
-5. A judged transaction takes roughly 30 to 110 seconds. The hosted RPC allows about 30 requests a minute per client, so reads are batched and polling is slow.
+5. A judged transaction takes roughly 30 to 110 seconds. The hosted RPC allows about 30 requests a minute and (observed on 11 October 2026) 500 requests an hour per client, so reads are batched and polling is slow (the pages refresh the job every 20 seconds and follow a transaction every 8 seconds); heavy scripted testing from one address can exhaust the hourly allowance and the pages then show the rate-limit error until it clears.
 
 ## 3. Contract state (per job)
 
@@ -214,6 +214,8 @@ With throwaway accounts (logs in `contracts/live/`):
 - Silent payer: request, early fallback rejected, fallback issued after the window, the shot with that code judged `yes / yes` and paid after finality.
 - The same flows through the web pages in a browser, on short-window test jobs, using a stand-in camera stream (the test browser had no camera).
 
+- Site check: a different site with the right code is refused for the site (`same_site: no`), a later photograph of the same site passes, the builder is paid once at finality and the books balance (`contracts/live/live_site.mjs`).
+- Failed payout on purpose: with the test-job fault injector on, the finalized payout fails, a retry fails, and past the force delay the stage is settled directly; the retried message later pays nothing (`live_hardening.mjs` path H, [evidence/live_hardening.md](evidence/live_hardening.md)).
 - Thumbnail check, settlement recovery and surplus: in-process tests (`tests/test_jpegdc.py`, `tests/test_pure.py`, `tests/test_recovery.py`) and live runs (`contracts/live/live_hardening.mjs`); the full flows through the deployed frontend are recorded in [EVIDENCE.md](EVIDENCE.md).
 
 ## 12. Known limitations and open items

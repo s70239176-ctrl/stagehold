@@ -8,7 +8,7 @@ import type { Snapshot } from "./types.ts";
  * Reads the job's snapshot now and every `everyMs` while the tab is visible. One batched read per poll keeps
  * us far below the hosted RPC's limit (about 30 requests a minute).
  */
-export function useSnapshot(contract: string, everyMs = 15000) {
+export function useSnapshot(contract: string, everyMs = 20000) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [error, setError] = useState<string>("");
   const busy = useRef(false);

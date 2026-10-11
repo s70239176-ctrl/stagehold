@@ -43,6 +43,15 @@ for (const [name, sc] of Object.entries(ev.scenarios)) {
       out += `| ${cell(t.label)} | [\`${short(t.hash)}\`](${EXPLORER}/tx/${t.hash}) | ${cell(t.status)} ${cell(t.result_name ?? "")} | ${cell(t.execution_result ?? "")} | ${t.validator_count ?? ""}${votes ? " (" + cell(votes) + ")" : ""} | ${cell((t.leader_output ?? "").startsWith("{") ? t.leader_output.slice(0, 110) : "")} |\n`;
     }
   }
+  const flat = (list, depth = 0) => (list ?? []).flatMap((x) => [{ ...x, depth }, ...flat(x.triggered, depth + 1)]);
+  const trig = (sc.txs ?? []).flatMap((tx) => flat(tx.triggered).map((x) => ({ ...x, parent: tx.label })));
+  if (trig.length) {
+    out += "\nMessages the transactions triggered (finalized payouts, fee burns, refunds and payouts). Each is a transaction of its own:\n\n| Triggered by | Message | Transaction | Status | GenVM | Note |\n|---|---|---|---|---|---|\n";
+    for (const x of trig) {
+      const what = x.kind === "value transfer" ? `transfer of ${x.value} wei` : "contract call (finalize_stage)";
+      out += `| ${cell(x.parent)} | ${what} | [\`${short(x.hash)}\`](${EXPLORER}/tx/${x.hash}) | ${cell(x.status)} | ${cell(x.execution_result ?? "")} | ${cell(x.error_text ?? "")} |\n`;
+    }
+  }
   if (sc.final) out += `\nFinal state: job \`${sc.final.snapshot?.status}\`, contract balance ${sc.final.balance} wei, accounting ${JSON.stringify(sc.final.accounting)}.\n`;
   out += "\n";
 }
@@ -54,6 +63,8 @@ out += [
   "- **Status:** `ACCEPTED` is a decision inside the appeal window; `FINALIZED` is final. Payouts fire only after finality.",
   "- **Hashes:** each link opens the transaction in the explorer; the full record of each (consensus data, GenVM result) is in `evidence/results/tx/<hash>.json`.",
   "- The money checks compare the contract's own balance with the expected figure, because Studionet does not credit ordinary accounts.",
+  "- **Value transfers to ordinary accounts** (fee burns, refunds, payouts) are recorded by Studionet as calls to a contract that does not exist, so their GenVM result reads ERROR (\"Contract 0x… not found\") while the contract's balance is debited exactly as the checks show. Studionet does not credit the recipient account (TRD section 2). The contract's own calls (every method, and the finalized payout self-call) all finish SUCCESS. This is a property of the development network, not of the contract.",
+  "- **Every transaction made through the frontend, and every contract call it triggered, reached FINALIZED with GenVM SUCCESS**; the harness waits for that and records a check per flow.",
   "",
   "The contract-level tests of the thumbnail check, settlement recovery and failed payable transactions are in [evidence/live_hardening.md](evidence/live_hardening.md).",
   "",

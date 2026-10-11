@@ -215,13 +215,15 @@ async function pathE() {
   // 5. close the job: both cancel -> unpaid stages refunded
   await send(payer, address, "cancel");
   await send(builder, address, "cancel");
+  // straight after closing (inside the 30 s delay): refused as too early
+  const early = await expectError(payer, address, "reclaim_surplus", [], "too early");
+  note("E reclaim straight after closing is refused as too early", early.ok, early.text);
   let sn = await snap(address);
   const afterRefund = await waitBalance(address, 30n + surplusNow, 240);
   note("E both cancelled: stage money refunded, credits and stray value remain", sn.status === "CANCELLED" && afterRefund === 30n + surplusNow, `status=${sn.status} balance=${afterRefund} (credits 30 + stray ${surplusNow})`);
 
-  const early = await expectError(payer, address, "reclaim_surplus", [], "too early");
   const stranger2 = await expectError(stranger, address, "reclaim_surplus", [], "only the payer");
-  note("E reclaim is refused too early and refused for anyone but the payer", early.ok || stranger2.ok, `early: ${early.text} | stranger: ${stranger2.text}`);
+  note("E reclaim is refused for anyone but the payer", stranger2.ok, stranger2.text);
 
   const need = sn.closed_at + sn.surplus_delay + 10;
   while ((await chainNow()) < need) { await sleep(10000); }
@@ -299,8 +301,9 @@ async function pathF(mode = "retry") {
 // ================================================================ H. an intentionally failed finalized payout
 // The payer of a TEST job switches on the fault injector: finalize_stage refuses to pay. The stage stays SETTLING.
 // A retry fails the same way; past the force delay, recover_settlement settles it directly. Nothing is paid twice.
-async function pathH() {
-  console.log("\n=== H. intentionally failed finalized payout, then forced recovery ===");
+async function pathHOnce(n) {
+  console.log(`
+=== H (attempt ${n}). intentionally failed finalized payout, then forced recovery ===`);
   const payer = actor(), builder = actor(), anyone = actor();
   const { address } = await deploy(payer, builder, 2592000n, 86400n);
   const k = await setup(payer, builder, address, ["1000"], 30n);
@@ -317,19 +320,26 @@ async function pathH() {
   note("H a production job has no fault injector", prod.ok, prod.text);
 
   const t0 = Date.now();
-  const sub = await send(builder, address, "submit", shotArgs(address, k, "good.jpg", "good_thumb.png"));
+  // send the shot and poll the state quickly, so the retry can be timed inside the retry window
+  const subHash = await paced("submit", () => builder.client.writeContract({ address, functionName: "submit", args: shotArgs(address, k, "good.jpg", "good_thumb.png"), value: 0n }));
+  const sub = { hash: subHash };
   sn = await snap(address);
-  for (let i = 0; i < 12 && sn.stages.roof.attempts === 0; i++) { await sleep(15000); sn = await snap(address); }
+  for (let i = 0; i < 80 && sn.stages.roof.attempts === 0; i++) { await sleep(3000); sn = await snap(address); }
   let st = sn.stages.roof;
   note("H the panel passes the shot; the stage is SETTLING", st.status === "SETTLING", `took ${Math.round((Date.now() - t0) / 1000)}s stage=${st.status} settle_at=${st.settle_at}`);
   const age = async () => (await chainNow()) - st.settle_at;
 
-  // a retry inside the retry window: it will fail the same way while the fault is on
+  // a retry late in the retry window (so its message is the last one on its way): it fails the same way while the fault is on
   let a = await age();
-  while (a < sn.settle_retry + 2) { await sleep(3000); a = await age(); }
-  const retry = await send(anyone, address, "recover_settlement", ["roof"]);
-  const retryText = await leaderText(retry.hash);
-  note("H retry: recover_settlement re-emits the finalized payout", /payout retried|settled directly/.test(retryText), `age~${a}s -> ${retryText}`);
+  let retry = null;
+  if (a <= sn.settle_force - 8) {
+    while (a < sn.settle_force - 15) { await sleep(3000); a = await age(); }
+    retry = await send(anyone, address, "recover_settlement", ["roof"]);
+    const retryText = await leaderText(retry.hash);
+    note("H retry: recover_settlement re-emits the finalized payout", /payout retried/.test(retryText), `age~${a}s -> ${retryText}`);
+  } else {
+    note(`H no retry in this run: the panel took long, so the pass was seen at age ${a}s, past the retry window`, null, "the retry path is exercised by path F; this run goes straight to the original payout's failure and the forced recovery");
+  }
 
   // wait for the ORIGINAL finalized message to fire and fail
   const subFinal = await waitFinal(sub.hash, 480);
@@ -343,23 +353,23 @@ async function pathH() {
   // past the force delay: direct settlement
   a = await age();
   while (a < sn.settle_force + 2) { await sleep(3000); a = await age(); }
-  const forced = await send(anyone, address, "recover_settlement", ["roof"]);
+  // the fault is switched off at the same moment, so the retried message (still on its way) meets a stage that is already settled
+  const [forced, f2] = await Promise.all([send(anyone, address, "recover_settlement", ["roof"]), send(payer, address, "dev_set_fault", [false])]);
   const forcedText = await leaderText(forced.hash);
   sn = await snap(address);
   note("H forced recovery: past the force delay the stage is settled directly, even though the payout keeps failing", /settled directly/.test(forcedText) && sn.stages.roof.status === "PAID" && sn.status === "DONE" && sn.settling === false, `age~${a}s -> ${forcedText}; stage=${sn.stages.roof.status} job=${sn.status} lock=${sn.settling}`);
-  const f2 = await send(payer, address, "dev_set_fault", [false]);
   const bal = await waitBalance(address, 20n, 300);
 
   // the retry's message fires later: it must not pay again, whatever the fault switch says
-  const retryFinal = await waitFinal(retry.hash, 480);
+  const retryFinal = retry ? await waitFinal(retry.hash, 480) : { triggered: [] };
   const retried = retryFinal.triggered.filter((x) => x.kind === "call");
   await sleep(60000);
   const bal2 = await balanceOf(address);
-  note("H the delayed retried payout cannot pay again", retried.every((x) => x.exec === "ERROR") && bal === 20n && bal2 === 20n,
-    `retried message: ${retried.map((x) => `${x.status} ${x.exec} (${x.error})`).join(" | ") || "none"}; builder paid once: contract balance ${bal} then ${bal2} (1000 stage + 30 credits - 10 fee - 1000 payout = 20)`);
+  note("H nothing pays twice: any delayed retried payout fails, and the builder was paid once", retried.every((x) => x.exec === "ERROR") && bal === 20n && bal2 === 20n,
+    `retried message: ${retried.map((x) => `${x.status} ${x.exec} (${x.error})`).join(" | ") || "none in this run"}; builder paid once: contract balance ${bal} then ${bal2} (1000 stage + 30 credits - 10 fee - 1000 payout = 20)`);
   const acc = await accounting(address);
   note("H accounting identity holds at the end", acc.balance === "20" && acc.liabilities === "20" && acc.surplus === "0", ser(acc));
-  const main = [["deposit/fund/credits/key/code (setup)", null], ["submit", sub.hash], ["retry", retry.hash], ["forced recovery", forced.hash]];
+  const main = [["submit", sub.hash], ["retry", retry ? retry.hash : null], ["forced recovery", forced.hash]];
   for (const [label, h] of main.filter((x) => x[1])) {
     const r = await waitFinal(h, 300);
     const tx = await paced("tx", () => reader.request({ method: "eth_getTransactionByHash", params: [h] }));
@@ -368,6 +378,14 @@ async function pathH() {
     note(`H ${label} transaction reached ${tx?.status} with GenVM ${l?.execution_result}`, tx?.status === "FINALIZED" && l?.execution_result === "SUCCESS", h);
   }
   return address;
+}
+
+async function pathH() {
+  for (let n = 1; n <= 3; n++) {
+    const r = await pathHOnce(n);
+    if (r) return r;
+  }
+  note("H could not get the timing right in three attempts", false, "");
 }
 
 const which = process.argv.slice(2).map((s) => s.toUpperCase());
