@@ -1,0 +1,20 @@
+
+=== D. the thumbnail must be a small copy of the judged frame ===
+GenLayer RPC error (eth_getTransactionCount): fetch failed
+  deployed 0x4E57E518E05Bf1F7097d14022Cb78befF15a7567
+GenLayer RPC error (eth_gasPrice): Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+FAIL D aborted  An unknown RPC error occurred.
+
+Details: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+Version: viem@2.57.3
+
+=== F (force). recovery of a SETTLING stage ===
+  deployed 0xB277fE01509e885c3da605C895CfEa7b04D7B462
+OK   F force: the panel passes the shot; the stage is SETTLING  took 55s stage=SETTLING settle_at=1791681189 attempt1={"stage_met": "yes", "code_visible": "yes", "site_aligned": true, "paid": true, "attempt": 1}
+OK   F force: anyone calls recover_settlement on a SETTLING stage (age 49s)  SUCCESS: settled directly
+OK   F force: builder paid exactly once (only the remaining 20 credits stay; nothing more leaves)  stage=PAID job=DONE balance=20 then 20 (1000 stage + 30 credits - 10 fee - 1000 payout = 20)
+OK   F force: recovery on a paid stage is refused  ERROR: stage is not settling
+OK   F force: accounting identity holds at the end  {"balance":"20","liabilities":"20","surplus":"0"}
+INFO contracts used  {"G":"0xB277fE01509e885c3da605C895CfEa7b04D7B462"}
+
+done. results in contracts/live/live_hardening_result.json

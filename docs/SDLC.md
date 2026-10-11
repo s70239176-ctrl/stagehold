@@ -27,12 +27,13 @@ fixtures/    attribution lists for test photographs (the photographs are fetched
 
 | Area | Status |
 |---|---|
-| Contract | Implemented. The full flow, cancel, expire and the silent-payer fallback have run on Studionet. Failed transactions leave no value stranded. |
-| Web app | Builds, typechecks, passes its unit tests. A full job and the cancel, expire and fallback paths ran through the pages in a browser, using a stand-in camera stream. |
+| Contract | Implemented. The full flow, cancel, expire and the silent-payer fallback have run on Studionet, and through the deployed frontend ([EVIDENCE.md](EVIDENCE.md)). A thumbnail that is not a copy of the judged frame is refused; a stuck `SETTLING` stage can be recovered; value left by failed transactions is reported and reclaimable ([TRD.md](TRD.md) sections 5.1, 5.2, 6.1). |
+| Web app | Builds, typechecks, passes its unit tests. Every flow runs through the deployed pages in a headless browser with a real construction-site photograph and simulated lettering on a stand-in camera stream ([EVIDENCE.md](EVIDENCE.md)). |
 | Attestation verifier | 49 desktop tests against Google's published sample chains; runs inside the Studionet runtime, including in write transactions. |
 | Android app | Draft only: never compiled or run on a device. Offline tools (`check_package.py`, `submit_package.mjs`, `deploy_job.mjs`) are tested. |
 | Judging | Panel verdicts verified on Studionet; real photographs not yet tried (section 4). |
-| Site alignment | Implemented, uncalibrated, off by default. |
+| Site alignment | Implemented, uncalibrated, off by default. The thumbnail it works on is now verified to be a copy of the judged frame. |
+| Capture authentication | Not complete: web mode authenticates the bytes, not the camera. Stated as a limitation everywhere; attested capture is a mainnet gate. |
 
 ## 4. Judging
 
@@ -63,14 +64,24 @@ The judges are GenLayer validators: the protocol selects the panel for each tran
 | RPC rate limits | Batched snapshot reads, slow polling, retry on rate-limit and network errors |
 | Overclaiming | Report measured results only; keep the capture-authenticity statements |
 
-## 7. Definition of done
+## 7. Response to the steward review
+
+| Request | What was done | Evidence |
+|---|---|---|
+| Complete and test site verification and capture authentication, or clearly maintain their limitations | Maintained as limitations: web capture cannot prove the camera, and alignment stays off until it can be calibrated on honest and dishonest photographs. Both are stated in the README, the contract snapshot (`capture_attested: false`, `alignment_enforced: false`) and every page | README, TRD sections 8 and 12 |
+| Recovery for failed finalized payout calls; no permanent `SETTLING` | `recover_settlement`: retry after a delay, direct settlement after a longer one, all payment paths idempotent | `tests/test_recovery.py`; live runs F and G in [live_hardening.md](evidence/live_hardening.md); the frontend button in the `recover` run of [EVIDENCE.md](EVIDENCE.md) |
+| Verify the submitted JPEG and the alignment thumbnail are the same image | A pure-Python reader gets the JPEG's block averages inside GenVM; the contract refuses a thumbnail that differs. The client builds the thumbnail from the encoded JPEG | `tests/test_jpegdc.py`, `tests/test_pure.py`; live run D |
+| Test failed payable transactions so attached GEN is not unaccounted for | Surplus accounting and `reclaim_surplus`; failed payable calls were exercised live (payer-only and builder-only payables, a non-payable method) | `tests/test_recovery.py`; live run E; the `cancel` run of [EVIDENCE.md](EVIDENCE.md) |
+| Successful end-to-end evidence with real construction photographs and handwritten codes, validator judgments, GenVM execution, finalized payouts, cancellation, expiration, refunds, correct financial changes, through the deployed frontend | Run through the deployed frontend: pass (wrong code refused first), recover, cancel with stray-fund reclaim, expire, silent-payer fallback, each with transaction hashes, votes, GenVM result and balance checks against expected figures. **Codes were simulated lettering on a real construction-site photograph, not a human hand**; a real wall with handwriting remains to be done | [EVIDENCE.md](EVIDENCE.md), `evidence/` |
+
+## 8. Definition of done
 
 - [x] Gate 2: scripted failures and invariants pass on Studionet
 - [ ] Gate 3: real-wall trial passed
 - [ ] Attested capture verified with a real device
 - [ ] The README states the limits: public photographs, offline rehearsal, generated images, no proof of title or materials
 
-## 8. Submission checklist
+## 9. Submission checklist
 
 - [x] App runs locally, build passes, tests pass
 - [x] `.env` is not committed; `web/.env.example` exists; no keys in code
@@ -79,4 +90,5 @@ The judges are GenLayer validators: the protocol selects the panel for each tran
 - [x] Screenshots added (`docs/screenshots/`)
 - [x] Live link: https://stagehold-cr.vercel.app/
 - [x] Demo video recorded ([demo/stagehold-demo.mp4](demo/stagehold-demo.mp4), 1 min 50 s with voiceover; script in [DEMO.md](DEMO.md))
-- [ ] Real-wall trial (gate 3)
+- [x] End-to-end evidence through the deployed frontend ([EVIDENCE.md](EVIDENCE.md))
+- [ ] Real-wall trial with true handwritten codes (gate 3): needs photographs from a real wall; `evidence/run.mjs` accepts them

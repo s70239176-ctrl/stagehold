@@ -1,0 +1,31 @@
+
+=== D. the thumbnail must be a small copy of the judged frame ===
+  deployed 0x885E5608dc57112cc8A0096e1D715120AcE190d1
+FAIL D thumbnail of another frame is refused  SUCCESS: {"stage_met": "yes", "code_visible": "yes", "site_aligned": true, "paid": true, "attempt": 1}
+FAIL D thumbnail of the wrong size is refused  ERROR: job cannot take a submission now
+FAIL D refused shots change nothing: credits, attempts and balance  credits 50->40 attempts=1 balance 1050->1040
+OK   D honest frame and its own thumbnail reach the panel  took 31s attempt1={"stage_met": "yes", "code_visible": "yes", "site_aligned": true, "paid": true, "attempt": 1} leader=ERROR: job cannot take a submission now
+
+=== E. value from failed transactions is accounted for and recoverable ===
+  deployed 0xFf29BbD662aEdBdc8803E576278F9c55e49b93d6
+OK   E books balance before any stray value  balance=1030 accounting={"balance":"1030","liabilities":"1030","surplus":"0"}
+OK   E payable call that errors keeps the value, visible as surplus  leader=ERROR: only the payer balance=1807 accounting={"balance":"1807","liabilities":"1030","surplus":"777"}
+OK   E second failed payable call adds to the surplus  leader=ERROR: only the builder balance=1862 accounting={"balance":"1862","liabilities":"1030","surplus":"832"}
+OK   E value attached to a non-payable method is also accounted for  leader=ERROR: exit_code 1 balance=1985 accounting={"balance":"1985","liabilities":"1030","surplus":"955"}
+OK   E surplus cannot be reclaimed while the job is open  ERROR: the job is not closed
+OK   E both cancelled: stage money refunded, credits and stray value remain  status=CANCELLED balance=985 (credits 30 + stray 955)
+OK   E reclaim is refused too early and refused for anyone but the payer  early: SUCCESS: 955 | stranger: ERROR: only the payer
+OK   E payer reclaims exactly the stray value; credits untouched  leader=ERROR: no unaccounted value balance=30 accounting={"balance":"30","liabilities":"30","surplus":"0"}
+OK   E a second reclaim finds nothing  ERROR: no unaccounted value
+OK   E builder withdraws credits; contract ends at exactly 0  balance=0
+
+=== F. recovery of a SETTLING stage (retry, direct settlement, no double payment) ===
+  deployed 0x23568f7Ce76e7ca41929A5fb9AFB304e393D6Ce4
+OK   F the panel passes the shot and the stage goes SETTLING (or has already paid)  took 43s stage=SETTLING settle_at=1791680534 attempt1={"stage_met": "yes", "code_visible": "yes", "site_aligned": true, "paid": true, "attempt": 1}
+OK   F anyone can call recover_settlement; the answer matches the stage's age  age~48s -> SUCCESS: tpayout retried
+FAIL F builder paid exactly once: only the 30 credits remain, nothing more leaves  stage=PAID job=DONE balance=20 then 20
+OK   F recovery on a paid stage is refused  ERROR: stage is not settling
+FAIL F accounting identity holds at the end  {"balance":"20","liabilities":"20","surplus":"0"}
+INFO contracts used  {"D":"0x885E5608dc57112cc8A0096e1D715120AcE190d1","E":"0xFf29BbD662aEdBdc8803E576278F9c55e49b93d6","F":"0x23568f7Ce76e7ca41929A5fb9AFB304e393D6Ce4"}
+
+done. results in contracts/live/live_hardening_result.json

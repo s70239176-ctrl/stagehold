@@ -37,16 +37,28 @@ for (const [name, sc] of Object.entries(ev.scenarios)) {
   out += "| Result | Check | Figures |\n|---|---|---|\n";
   for (const s of sc.steps) out += `| ${mark(s)} | ${cell(s.name)} | ${cell(s.detail)} |\n`;
   if (sc.txs?.length) {
-    out += "\nTransactions made through the frontend:\n\n| Step | Transaction | Status | GenVM | Validators |\n|---|---|---|---|---|\n";
+    out += "\nTransactions made through the frontend:\n\n| Step | Transaction | Status | GenVM | Validators (votes) | Output |\n|---|---|---|---|---|---|\n";
     for (const t of sc.txs) {
-      const votes = t.votes ? (typeof t.votes === "object" ? Object.values(t.votes).join(", ") : String(t.votes)) : "";
-      out += `| ${cell(t.label)} | [\`${short(t.hash)}\`](${EXPLORER}/transactions/${t.hash}) | ${cell(t.status)} ${cell(t.result_name ?? "")} | ${cell(t.execution_result ?? "")} | ${t.validator_count ?? ""}${votes ? " (" + cell(votes) + ")" : ""} |\n`;
+      const votes = t.votes ? Object.entries(t.votes).map(([k, v]) => `${k}×${v}`).join(", ") : "";
+      out += `| ${cell(t.label)} | [\`${short(t.hash)}\`](${EXPLORER}/tx/${t.hash}) | ${cell(t.status)} ${cell(t.result_name ?? "")} | ${cell(t.execution_result ?? "")} | ${t.validator_count ?? ""}${votes ? " (" + cell(votes) + ")" : ""} | ${cell((t.leader_output ?? "").startsWith("{") ? t.leader_output.slice(0, 110) : "")} |\n`;
     }
   }
   if (sc.final) out += `\nFinal state: job \`${sc.final.snapshot?.status}\`, contract balance ${sc.final.balance} wei, accounting ${JSON.stringify(sc.final.accounting)}.\n`;
   out += "\n";
 }
 const all = Object.values(ev.scenarios).flatMap((s) => s.steps);
+out += [
+  "## Notes on the transaction tables",
+  "",
+  "- **Validators (votes):** each transaction was decided by five validators. `agree` is a vote for the leader's result; `idle` is a validator that did not vote in that round, which the protocol tolerates when a majority agrees. A judged `submit` shows the verdict the panel agreed on in the Output column.",
+  "- **Status:** `ACCEPTED` is a decision inside the appeal window; `FINALIZED` is final. Payouts fire only after finality.",
+  "- **Hashes:** each link opens the transaction in the explorer; the full record of each (consensus data, GenVM result) is in `evidence/results/tx/<hash>.json`.",
+  "- The money checks compare the contract's own balance with the expected figure, because Studionet does not credit ordinary accounts.",
+  "",
+  "The contract-level tests of the thumbnail check, settlement recovery and failed payable transactions are in [evidence/live_hardening.md](evidence/live_hardening.md).",
+  "",
+  "",
+].join("\n");
 out += `## Summary\n\n${all.filter((s) => s.ok === true).length} checks passed, ${all.filter((s) => s.ok === false).length} failed, ${all.filter((s) => s.ok === null).length} informational.\n`;
 fs.writeFileSync(path.join(root, "docs", "EVIDENCE.md"), out);
 console.log("wrote docs/EVIDENCE.md", out.length, "chars");

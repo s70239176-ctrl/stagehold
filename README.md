@@ -30,11 +30,11 @@
 | Chain ID | `61999` |
 | Explorer | https://explorer-studio.genlayer.com |
 | Contract source | [`contracts/stagehold.py`](contracts/stagehold.py) (generated; see below) |
-| Reference deployment | [`0x11B2F159f67F7b78c6149dCc4A0c9Cbe6B565aB6`](https://explorer-studio.genlayer.com/address/0x11B2F159f67F7b78c6149dCc4A0c9Cbe6B565aB6) |
+| Reference deployment | [`0xFd14458AE0fD0CAd05d6020a2fcd81EDe293D75B`](https://explorer-studio.genlayer.com/address/0xFd14458AE0fD0CAd05d6020a2fcd81EDe293D75B): a completed job from the end-to-end evidence run (wrong code refused, right code passed, stage paid), made through the deployed site with the current contract |
 
-**One contract per job.** Stagehold deploys a fresh contract for every job, from the payer page, so there is no single address the app depends on. The reference deployment above is an unfunded job with a throwaway payer and builder, kept so reviewers can read a live contract on the explorer, for example `get_snapshot`. To run the real flow, create your own job in the app; the job's address appears in the job panel and in the builder link (`/builder?job=0x…`).
+**One contract per job.** Stagehold deploys a fresh contract for every job, from the payer page, so there is no single address the app depends on. The reference deployment above is a finished job with throwaway accounts, kept so reviewers can read a live contract and its history on the explorer, for example `get_snapshot` and `get_attempt`. To run the real flow, create your own job in the app; the job's address appears in the job panel and in the builder link (`/builder?job=0x…`).
 
-Main methods (17 in all): `deposit`, `fund`, `issue_code`, `request_code`, `trigger_fallback_code`, `register_software_key`, `register_device`, `deposit_credits`, `submit` (the judged call), `finalize_stage` (pays after finality), `cancel`, `expire`, `withdraw_deposit`, `withdraw_credits`, and the views `get_snapshot`, `get_anchor`, `get_attempt`.
+Main methods (20 in all): `deposit`, `fund`, `issue_code`, `request_code`, `trigger_fallback_code`, `register_software_key`, `register_device`, `deposit_credits`, `submit` (the judged call), `finalize_stage` (pays after finality), `recover_settlement` (retries or settles a payout that did not land), `cancel`, `expire`, `withdraw_deposit`, `withdraw_credits`, `reclaim_surplus` (returns stray value to the payer), and the views `get_snapshot`, `get_accounting`, `get_anchor`, `get_attempt`.
 
 ## How it works
 
@@ -42,10 +42,10 @@ Main methods (17 in all): `deposit`, `fund`, `issue_code`, `request_code`, `trig
 
 1. **Create and fund.** The payer deploys a job for a named builder, deposits GEN, funds the stages and stores a small anchor photo of the site on-chain.
 2. **Issue a code.** The payer issues a 4 to 16 character code valid for six hours. If the payer stays silent for the job's window (24 hours), the builder can unlock a fallback code of two words from a fixed list.
-3. **Shoot and sign.** The builder writes the code on the work and takes a live-camera frame. The browser signs the stage, the code, the deadline and the image hashes with a non-extractable key registered for the job.
-4. **Judge.** `submit` charges a flat attempt fee from the builder's credits and runs the vision prompt through `gl.nondet.exec_prompt` in the optimistic-democracy consensus. If validators disagree, nothing is recorded and nothing is charged.
-5. **Pay at finality.** An accepted stage locks the escrow; when the result is final, the contract pays the builder through a self-call. There is no release button.
-6. **Exits.** The job can be cancelled only by both parties, or expired after its deadline, which refunds unpaid stages to the payer.
+3. **Shoot and sign.** The builder writes the code on the work and takes a live-camera frame. The browser builds a small thumbnail from the encoded JPEG and signs the stage, the code, the deadline and both image hashes with a non-extractable key registered for the job.
+4. **Judge.** `submit` first checks the signature and that the thumbnail really is a small copy of the JPEG (the contract reads the frame's block averages itself, because GenVM has no JPEG decoder), then charges a flat attempt fee from the builder's credits and runs the vision prompt through `gl.nondet.exec_prompt` in the optimistic-democracy consensus. If validators disagree, nothing is recorded and nothing is charged.
+5. **Pay at finality.** An accepted stage locks the escrow; when the result is final, the contract pays the builder through a self-call. There is no release button. If that payout message ever fails, the stage cannot stay locked: anyone can retry it after a delay and settle it directly after a longer one, and a late or duplicate payout message pays nothing (see [docs/TRD.md](docs/TRD.md) section 5.1).
+6. **Exits.** The job can be cancelled only by both parties, or expired after its deadline, which refunds unpaid stages to the payer. Value that reached the contract through a failed transaction is reported as surplus, and the payer can reclaim exactly that once the job is closed.
 
 **Result structure.** The builder sees three results, never the model's explanation: stage complete, code visible, and same site (shown as "not checked yet" while the alignment check is off). Details are in [docs/PRD.md](docs/PRD.md) and [docs/TRD.md](docs/TRD.md).
 
@@ -108,6 +108,10 @@ genvm-lint check contracts/stagehold.py
 
 The camera needs HTTPS, which Vercel provides.
 
+## End-to-end evidence
+
+[docs/EVIDENCE.md](docs/EVIDENCE.md) records the flows run through the **deployed frontend** on Studionet: pass with a refused wrong-code attempt first, payout recovery, cancel with stray-fund reclaim, expiry, and the silent-payer fallback. It lists every transaction hash, the validators' judgment and GenVM result, and the contract's balance before and after each financial step against the expected figure. `contracts/live/live_hardening.mjs` and `tests/` cover the thumbnail check, settlement recovery and surplus accounting; `evidence/` holds the harness so anyone can re-run it. The codes on the wall in these runs are **simulated lettering** on a real construction-site photograph, not a human hand; the harness accepts your own handwritten photographs.
+
 ## Demo evidence
 
 Everything below can be tried without photographs of your own.
@@ -129,6 +133,8 @@ Screenshots are narrow browser-pane captures of the landing page; the drawings a
 ## Known limitations
 
 - **No capture authenticity on the web.** A browser cannot prove a frame came from a real camera. Frames come only from the live camera stream, and the page refuses software cameras by name and feeds that never change, but a virtual camera that adds noise still passes. Every web job is created with `software_keys` and reports `capture_attested: false`. The attested Android app is paused and is a **mainnet gate**: real value only moves in jobs that require an attested key.
+- **Site verification is off.** The contract can compare the submitted frame's thumbnail with the payer's anchor (`alignment_enforced`), and that thumbnail is now verified to be a copy of the judged frame, but the match threshold has not been calibrated on honest and dishonest photographs, so it is not enforced: a frame is judged without confirming it shows the intended site. The builder page says "not checked yet".
+- **Handwriting.** The end-to-end runs use a real construction-site photograph with the code lettered in a handwriting-style font, not a human hand on a real wall. Photographs of true handwritten codes have not been run yet; `evidence/` accepts them.
 - **A photograph is not title.** It shows what is visible, not who owns the land, what materials were used or what is inside a wall.
 - **Studionet is a development network.** Its GEN has no market value, ordinary accounts are not credited there, so payouts are verified through the contract's balance. Judged transactions take 30 to 110 seconds, and the RPC allows about 30 requests a minute per client.
 - **Wallet connection** (EIP-1193) is optional. It was checked with a mock wallet and then by the maintainer with a real browser wallet; the GenLayer Snap is not requested and other wallets are untested. The default is a throwaway browser key.

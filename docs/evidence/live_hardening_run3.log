@@ -1,0 +1,20 @@
+
+=== D. the thumbnail must be a small copy of the judged frame ===
+GenLayer RPC error (eth_getTransactionCount): fetch failed
+  deployed 0x6655C1FbdF81CDCED0095729D8cE52CbC27E31D2
+OK   D thumbnail of the wrong size is refused  ERROR: thumbnail size does not match the frame
+OK   D thumbnail of a different picture is refused  ERROR: thumbnail does not match the frame
+OK   D refused shots change nothing: credits, attempts and balance  credits 50->50 attempts=0 balance 1050->1050
+GenLayer RPC error (eth_getTransactionByHash): fetch failed
+OK   D honest frame and its own thumbnail reach the panel  took 77s attempt1={"stage_met": "yes", "code_visible": "yes", "site_aligned": true, "paid": true, "attempt": 1} leader=SUCCESS: {"stage_met": "yes", "code_visible": "yes", "site_aligned": true, "pa
+
+=== F (retry). recovery of a SETTLING stage ===
+  deployed 0x581981aD0Da302e50cd657362c20a42D3EA2dc90
+OK   F retry: the panel passes the shot; the stage is SETTLING  took 45s stage=SETTLING settle_at=1791681769 attempt1={"stage_met": "yes", "code_visible": "yes", "site_aligned": true, "paid": true, "attempt": 1}
+OK   F retry: anyone calls recover_settlement on a SETTLING stage (age 34s)  SUCCESS: tpayout retried
+OK   F retry: builder paid exactly once (only the remaining 20 credits stay; nothing more leaves)  stage=PAID job=DONE balance=20 then 20 (1000 stage + 30 credits - 10 fee - 1000 payout = 20)
+OK   F retry: recovery on a paid stage is refused  ERROR: stage is not settling
+OK   F retry: accounting identity holds at the end  {"balance":"20","liabilities":"20","surplus":"0"}
+INFO contracts used  {"D":"0x6655C1FbdF81CDCED0095729D8cE52CbC27E31D2","F":"0x581981aD0Da302e50cd657362c20a42D3EA2dc90"}
+
+done. results in contracts/live/live_hardening_result.json
