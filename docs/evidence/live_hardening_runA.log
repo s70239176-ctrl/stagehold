@@ -1,57 +1,60 @@
 
 === D. the thumbnail must be a small copy of the judged frame ===
-  deployed 0x2528eF74942Ae5756556E73a7F5b10259937e40f
+GenLayer RPC error (eth_getTransactionByHash): fetch failed
+GenLayer RPC error (eth_getTransactionByHash): fetch failed
+  deployed 0x74aCcE5f393a68420e467705Cb556dDd8D7e4B07
 OK   D thumbnail of the wrong size is refused  ERROR: thumbnail size does not match the frame
 OK   D thumbnail of a different picture is refused  ERROR: thumbnail does not match the frame
 OK   D refused shots change nothing: credits, attempts and balance  credits 50->50 attempts=0 balance 1050->1050
-OK   D honest frame and its own thumbnail reach the panel  took 47s attempt1={"stage_met": "yes", "code_visible": "yes", "same_site": "off", "site_aligned": true, "paid": true, "attempt": 1} leader=SUCCESS: {"stage_met": "yes", "code_visible": "yes", "same_site": "off", "site
+GenLayer RPC error (eth_getTransactionByHash): fetch failed
+OK   D honest frame and its own thumbnail reach the panel  took 73s attempt1={"stage_met": "yes", "code_visible": "yes", "same_site": "off", "site_aligned": true, "paid": true, "attempt": 1} leader=SUCCESS: {"stage_met": "yes", "code_visible": "yes", "same_site": "off", "site
 
 === E. value from failed transactions is accounted for and recoverable ===
-  deployed 0x3D80F42E90DdC24Ec68D67a697244C3A0D0afBdc
+  deployed 0x916F808439006a466787C621a2cde67128b10562
 OK   E books balance before any stray value  balance=1030 accounting={"balance":"1030","liabilities":"1030","surplus":"0"}
 OK   E payable call that errors keeps the value, visible as surplus  leader=ERROR: only the payer balance=1807 accounting={"balance":"1807","liabilities":"1030","surplus":"777"}
 OK   E second failed payable call adds to the surplus  leader=ERROR: only the builder balance=1862 accounting={"balance":"1862","liabilities":"1030","surplus":"832"}
 OK   E value attached to a non-payable method is also accounted for  leader=ERROR: exit_code 1 balance=1985 accounting={"balance":"1985","liabilities":"1030","surplus":"955"}
 OK   E surplus cannot be reclaimed while the job is open  ERROR: the job is not closed
+OK   E reclaim straight after closing is refused as too early  ERROR: too early: wait for pending refunds and payouts to land
 OK   E both cancelled: stage money refunded, credits and stray value remain  status=CANCELLED balance=985 (credits 30 + stray 955)
-OK   E reclaim is refused too early and refused for anyone but the payer  early: SUCCESS: 955 | stranger: ERROR: only the payer
-OK   E payer reclaims exactly the stray value; credits untouched  leader=ERROR: no unaccounted value balance=30 accounting={"balance":"30","liabilities":"30","surplus":"0"}
+OK   E reclaim is refused for anyone but the payer  ERROR: only the payer
+OK   E payer reclaims exactly the stray value; credits untouched  leader=SUCCESS: 955 balance=30 accounting={"balance":"30","liabilities":"30","surplus":"0"}
 OK   E a second reclaim finds nothing  ERROR: no unaccounted value
 OK   E builder withdraws credits; contract ends at exactly 0  balance=0
 
 === F (retry). recovery of a SETTLING stage ===
-  deployed 0xdB3FB1334B6AaDEd90E14F39f3266540c10F6849
-OK   F retry: the panel passes the shot; the stage is SETTLING  took 40s stage=SETTLING settle_at=1791737390 attempt1={"stage_met": "yes", "code_visible": "yes", "same_site": "off", "site_aligned": true, "paid": true, "attempt": 1}
+  deployed 0x2f72fabb0f3651FfE5F946Fb7c670d1f3FA5a6b5
+GenLayer RPC error (eth_getTransactionByHash): fetch failed
+OK   F retry: the panel passes the shot; the stage is SETTLING  took 40s stage=SETTLING settle_at=1791761767 attempt1={"stage_met": "yes", "code_visible": "yes", "same_site": "off", "site_aligned": true, "paid": true, "attempt": 1}
 OK   F retry: anyone calls recover_settlement on a SETTLING stage (age 33s)  SUCCESS: tpayout retried
-GenLayer RPC error (eth_getBalance): fetch failed
 OK   F retry: builder paid exactly once (only the remaining 20 credits stay; nothing more leaves)  stage=PAID job=DONE balance=20 then 20 (1000 stage + 30 credits - 10 fee - 1000 payout = 20)
 OK   F retry: recovery on a paid stage is refused  ERROR: stage is not settling
 OK   F retry: accounting identity holds at the end  {"balance":"20","liabilities":"20","surplus":"0"}
 INFO F retry: the original finalized payout message and what it did  submit FINALIZED; original message(s): FINALIZED SUCCESS
 
 === F (force). recovery of a SETTLING stage ===
-  deployed 0xdb9b1Bb6C55428787D9EaBB152a6d424002065A5
-OK   F force: the panel passes the shot; the stage is SETTLING  took 55s stage=SETTLING settle_at=1791737705 attempt1={"stage_met": "yes", "code_visible": "yes", "same_site": "off", "site_aligned": true, "paid": true, "attempt": 1}
-OK   F force: anyone calls recover_settlement on a SETTLING stage (age 48s)  SUCCESS: settled directly
+  deployed 0xc9124b91dfC63D50c4b238f465F7AEE9C6fd18cE
+OK   F force: the panel passes the shot; the stage is SETTLING  took 79s stage=SETTLING settle_at=1791762073 attempt1={"stage_met": "yes", "code_visible": "yes", "same_site": "off", "site_aligned": true, "paid": true, "attempt": 1}
+OK   F force: anyone calls recover_settlement on a SETTLING stage (age 73s)  SUCCESS: settled directly
 OK   F force: builder paid exactly once (only the remaining 20 credits stay; nothing more leaves)  stage=PAID job=DONE balance=20 then 20 (1000 stage + 30 credits - 10 fee - 1000 payout = 20)
 OK   F force: recovery on a paid stage is refused  ERROR: stage is not settling
 OK   F force: accounting identity holds at the end  {"balance":"20","liabilities":"20","surplus":"0"}
 INFO F force: the original finalized payout message and what it did  submit FINALIZED; original message(s): FINALIZED ERROR (stage is not settling for this attempt)
 
-=== H. intentionally failed finalized payout, then forced recovery ===
-  deployed 0x76A593c53ADFBE3C79A64a1C0430f753089202e2
+=== H (attempt 1). intentionally failed finalized payout, then forced recovery ===
+  deployed 0xCD8954f3599496dba06Bc8C5EA27DC5E3582606B
 OK   H the payer switches the fault injector on (test job only)  dev_fault=true dev_mode=true
 OK   H a production job has no fault injector  ERROR: only test jobs have a fault injector
-OK   H the panel passes the shot; the stage is SETTLING  took 39s stage=SETTLING settle_at=1791738062
-OK   H retry: recover_settlement re-emits the finalized payout  age~31s -> SUCCESS: tpayout retried
+OK   H the panel passes the shot; the stage is SETTLING  took 77s stage=SETTLING settle_at=1791762477
+INFO H no retry in this run: the panel took long, so the pass was seen at age 69s, past the retry window  the retry path is exercised by path F; this run goes straight to the original payout's failure and the forced recovery
 OK   H the original finalized payout FAILED on purpose and the stage is still SETTLING  original message: ACCEPTED ERROR (injected test fault: the payout is refused); stage=SETTLING; lock=true
 OK   H nothing was paid while the payout kept failing  contract balance 1020 (1000 stage + 20 credits left)
-OK   H forced recovery: past the force delay the stage is settled directly, even though the payout keeps failing  age~69s -> SUCCESS: settled directly; stage=PAID job=DONE lock=false
-OK   H the delayed retried payout cannot pay again  retried message: FINALIZED ERROR (injected test fault: the payout is refused); builder paid once: contract balance 20 then 20 (1000 stage + 30 credits - 10 fee - 1000 payout = 20)
+OK   H forced recovery: past the force delay the stage is settled directly, even though the payout keeps failing  age~107s -> SUCCESS: settled directly; stage=PAID job=DONE lock=false
+OK   H nothing pays twice: any delayed retried payout fails, and the builder was paid once  retried message: none in this run; builder paid once: contract balance 20 then 20 (1000 stage + 30 credits - 10 fee - 1000 payout = 20)
 OK   H accounting identity holds at the end  {"balance":"20","liabilities":"20","surplus":"0"}
-OK   H submit transaction reached FINALIZED with GenVM SUCCESS  0x3fedd93bf1973bb8a9a1aa0a248991155b20fdd382c16e95a0f2e2e4dcead3ac
-OK   H retry transaction reached FINALIZED with GenVM SUCCESS  0x22afa422a41d3ad3f62643d557105a978969bc137f42f11b6562c8f311d7a261
-OK   H forced recovery transaction reached FINALIZED with GenVM SUCCESS  0x6c34d0658afca4a86d39c1277e3680bec4826eacded2f1956e9440bc47829509
-INFO contracts used  {"D":"0x2528eF74942Ae5756556E73a7F5b10259937e40f","E":"0x3D80F42E90DdC24Ec68D67a697244C3A0D0afBdc","F":"0xdB3FB1334B6AaDEd90E14F39f3266540c10F6849","G":"0xdb9b1Bb6C55428787D9EaBB152a6d424002065A5","H":"0x76A593c53ADFBE3C79A64a1C0430f753089202e2"}
+OK   H submit transaction reached FINALIZED with GenVM SUCCESS  0xae2f5e24aca0f5413403a370170468eea122379867f1b061a5020a7024161c15
+OK   H forced recovery transaction reached FINALIZED with GenVM SUCCESS  0x7a9ebd22abd4874decc12aa7149533515722c51fc1d1471728162c17cbe86ccb
+INFO contracts used  {"D":"0x74aCcE5f393a68420e467705Cb556dDd8D7e4B07","E":"0x916F808439006a466787C621a2cde67128b10562","F":"0x2f72fabb0f3651FfE5F946Fb7c670d1f3FA5a6b5","G":"0xc9124b91dfC63D50c4b238f465F7AEE9C6fd18cE","H":"0xCD8954f3599496dba06Bc8C5EA27DC5E3582606B"}
 
 done. results in contracts/live/live_hardening_result.json
