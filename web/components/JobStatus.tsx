@@ -40,7 +40,9 @@ export function JobHeader({ contract, snapshot }: { contract: string; snapshot: 
         <div className="row">
           {!snapshot.capture_attested ? <span className="badge badge-warn" title="The contract cannot verify that a photograph came from a live camera">Capture not verified</span> : <span className="badge badge-ok">Capture attested</span>}
           {snapshot.dev_mode ? <span className="badge badge-info">Test timing</span> : null}
-          <span className="badge">{snapshot.alignment_enforced ? "Site check on" : "Site check off"}</span>
+          {snapshot.site_check || snapshot.alignment_enforced
+            ? <span className="badge badge-ok" title="The validators are asked whether each photograph shows the same site as the anchor photograph">Site check on</span>
+            : <span className="badge badge-warn" title="This job does not ask whether a photograph shows the intended site">Site not checked</span>}
         </div>
       </div>
     </div>

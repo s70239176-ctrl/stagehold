@@ -1,10 +1,14 @@
 def _gray(png, side):
+    """png is PNG bytes, or a grid of 0..255 brightness values (the DC image of a JPEG)."""
     import io
     import numpy as np
     from PIL import Image
 
-    img = Image.open(io.BytesIO(png))
-    img.load()
+    if isinstance(png, (bytes, bytearray)):
+        img = Image.open(io.BytesIO(png))
+        img.load()
+    else:
+        img = Image.fromarray(np.array(png, dtype=np.uint8), "L")
     img = img.convert("L").resize((side, side), Image.BILINEAR)
     return np.asarray(img, dtype=np.int32)
 

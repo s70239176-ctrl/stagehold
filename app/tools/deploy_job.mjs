@@ -62,7 +62,7 @@ const anchorB64 = readFileSync(anchorPath).toString("base64");
 console.log("deploying (dev_mode =", devMode, ") ...");
 const dh = await paced(() => pc.deployContract({
   code: source,
-  args: [builder.address, 10n, 604800n, appPackage, appDigest, 0n, devMode, 86400n, devMode],
+  args: [builder.address, 10n, 604800n, appPackage, appDigest, 0n, devMode, 86400n, devMode, false],
 }));
 const dr = await paced(() => pc.waitForTransactionReceipt({ hash: dh, status: TransactionStatus.ACCEPTED, retries: 90, interval: 8000 }));
 const contract = dr?.data?.contract_address ?? dr?.txDataDecoded?.contractAddress;

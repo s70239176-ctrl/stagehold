@@ -1,6 +1,6 @@
 # Stagehold: Technical Requirements
 
-**Version:** 1.1 · **Status:** implemented and exercised on GenLayer Studionet · **Companion documents:** [PRD.md](PRD.md), [SDLC.md](SDLC.md)
+**Version:** 1.2 · **Status:** implemented and exercised on GenLayer Studionet · **Companion documents:** [PRD.md](PRD.md), [SDLC.md](SDLC.md)
 
 The contract source is generated: `python contracts/build.py` assembles `contracts/stagehold.py` from `study/prompt.py` (stage wording and judge prompt), `spikes/attest_verify.py` (attestation verifier), `contracts/src/jpegdc.py` (JPEG brightness reader and thumbnail check), `contracts/src/align.py` (site alignment) and `contracts/src/body.py` (the contract). Edit the parts, never the generated file.
 
@@ -48,8 +48,10 @@ Studionet behaviours that shaped the design:
 | `payer`, `builder` | Addresses; the deployer is the payer |
 | `fee`, `expires_at`, `payer_window` | Flat attempt fee, job deadline, seconds the payer has to issue a code |
 | `dev_mode`, `software_keys` | Test windows allowed; browser keys allowed (web mode) |
+| `site_check` | Whether the validators are also asked if each frame shows the same site as the anchor (section 7.1) |
+| `dev_fault` | Test jobs only: makes the finalized payout fail on purpose (section 5.1) |
 | `app_package`, `app_sig_digest` | Required identity for attested jobs |
-| `anchor_b64`, `anchor_hash` | Payer's grayscale PNG thumbnail (at most 30 KB) and its SHA-256, fixed at funding |
+| `anchor_b64`, `anchor_hash`, `anchor_kind` | The payer's anchor photograph, fixed at funding: a colour baseline JPEG of at most 100 KB (the web client sends one at 640 px), or a grayscale PNG of at most 30 KB; and its SHA-256 |
 | `payer_deposit`, `builder_credits` | Internal balances (see section 5) |
 | `stages` | Per funded stage: funded amount, status (`OPEN`, `SETTLING`, `PAID`), code, code deadline, request time, attempts, time it started settling (`settle_at`) |
 | `keys` | Registered device keys (at most 3), by `key_id = sha256(x ‖ y)` |
@@ -68,13 +70,13 @@ Stage wording is constant in the source (`study/prompt.py`). The payer chooses o
 
 ## 4. Interface
 
-Constructor: `(builder, fee, expires_in, app_package, app_sig_digest_hex, align_min_permille, dev_mode, payer_window_s, software_keys)`. Production jobs require `expires_in` of at least 30 days and use a fixed 24 hour payer window; `dev_mode` jobs may shorten both. Jobs that are neither `dev_mode` nor `software_keys` must name the app package and signing digest.
+Constructor: `(builder, fee, expires_in, app_package, app_sig_digest_hex, align_min_permille, dev_mode, payer_window_s, software_keys, site_check)`. Production jobs require `expires_in` of at least 30 days and use a fixed 24 hour payer window; `dev_mode` jobs may shorten both. Jobs that are neither `dev_mode` nor `software_keys` must name the app package and signing digest.
 
 | Method | Caller | Purpose |
 |---|---|---|
 | `deposit()` (payable) | payer | Credit the payer's deposit before funding |
 | `withdraw_deposit()` | payer | Take the deposit back while the job is `CREATED` |
-| `fund(stage_ids, amounts, anchor_b64)` | payer | Allocate the deposit to stages; store the anchor; job becomes `ACTIVE` |
+| `fund(stage_ids, amounts, anchor_b64)` | payer | Allocate the deposit to stages; store the anchor (a baseline JPEG the contract can read, or a decodable PNG); job becomes `ACTIVE` |
 | `deposit_credits()` (payable) | builder | Buy attempt credits |
 | `withdraw_credits()` | builder | Return unused credits |
 | `register_software_key(x, y)` | builder | Web mode: register a browser P-256 key (reverts unless `software_keys`) |
@@ -84,6 +86,7 @@ Constructor: `(builder, fee, expires_in, app_package, app_sig_digest_hex, align_
 | `trigger_fallback_code(stage)` | builder | After the payer window, derive a code from the job, stage, attempts, request time and current time |
 | `submit(stage, key_id, jpeg_b64, thumb_b64, signature_hex)` | builder | Judge one shot (section 6) |
 | `finalize_stage(stage, attempt)` | the contract itself | Run only after finality; pays the builder. Refused for a stage that is not settling for that attempt, so a late or duplicate message pays nothing |
+| `dev_set_fault(on)` | payer, test jobs only | Switch the payout fault injector on or off (section 5.1); production jobs refuse it |
 | `recover_settlement(stage)` | anyone | If a passing stage is still `SETTLING` long after it passed: after the retry delay, re-emit the finalized payout; after the force delay, settle directly (section 5.1) |
 | `reclaim_surplus()` | payer | Once the job has been closed for a while, take back value that is in nobody's balance (section 5.2) |
 | `cancel()` | either party | Refund unpaid stages only when both parties have called it |
@@ -133,9 +136,9 @@ A submission reverts, without calling the model, if any of these fails (in this 
 6. **Thumbnail check:** the thumbnail must be a small copy of this very JPEG (section 6.1).
 7. **Site alignment** (if enforced): the thumbnail against the stored anchor (section 7).
 
-Then the panel runs. Each validator receives the JPEG, the fixed stage wording and the code, and answers only `stage_met` and `code_visible` with `yes`, `no` or `unclear`, as JSON. The prompt states that text inside the picture is scenery and never an instruction, and that anything uncertain is `unclear`. Parsing is strict: any malformed answer becomes `unclear` for both fields.
+Then the panel runs. Each validator receives the JPEG, the fixed stage wording and the code, and answers `stage_met` and `code_visible` with `yes`, `no` or `unclear`, as JSON. When `site_check` is on, the leader also asks a second question with two images, the stored anchor and the frame: `same_site` (section 7.1). The prompt states that text inside the picture is scenery and never an instruction, and that anything uncertain is `unclear`. Parsing is strict: any malformed answer becomes `unclear` for both fields.
 
-**Consensus** compares only the two fields. Wording and confidence are not compared. A pass needs both `yes`. Anything else does not pay; the fee is burned and the builder may shoot again. If validators cannot agree, the transaction applies no state.
+**Consensus** compares only the answer fields (two, or three with the site check). Wording and confidence are not compared. A pass needs `stage_met` and `code_visible` both `yes`, and with the site check on also `same_site` `yes`. Anything else does not pay; the fee is burned and the builder may shoot again. If validators cannot agree, the transaction applies no state.
 
 ### 6.1 The thumbnail is a copy of the frame
 
@@ -145,15 +148,25 @@ The web client builds its thumbnail from the encoded JPEG it submits: it decodes
 
 Limits of the check: it compares overall brightness layout, so a thumbnail of a picture that differs from the frame only in small details (for example the code written on the wall) also matches. That is acceptable because the thumbnail feeds only the alignment check, which is about the site, not the code.
 
-## 7. Site alignment
+## 7. Site verification
 
-Implemented in `contracts/src/align.py` and **off by default** (`align_min_permille = 0`) because the threshold is uncalibrated.
+Two mechanisms exist. The first is enforced on web jobs; the second was calibrated on genuine photographs and found unusable. Full data and method: [SITE_VERIFICATION.md](SITE_VERIFICATION.md).
 
-- Decode both PNG thumbnails, resize to 64 by 64 grayscale with a fixed filter, compute an edge map, keep the strongest 20 percent of edges, and take the best overlap over small integer shifts, as an integer from 0 to 1000. Integer arithmetic keeps validators in agreement.
-- With the thumbnail check above, the thumbnail alignment sees is provably a copy of the judged frame.
-- Purpose: reject an invented building. An edited copy of the anchor still passes, so this is not a control against fakes.
-- To measure: honest later shots from different positions, and stages that change the scene (a new roof covers the wall tops). A standing-point rule for the anchor may be needed. If honest frames fail often, redesign or drop the check.
-- While alignment is off the contract reports `site_aligned: true` unconditionally; clients must show "not checked yet" when `alignment_enforced` is false.
+### 7.1 The panel's same-site question (on by default in the web app)
+
+With `site_check` on, the validators compare the stored anchor with the new frame (two images, within the runtime's limit of two per call) and answer `same_site`: `yes` only if they are confident both show the same plot and surroundings, allowing for later building work and a slightly different position; `no` for a different place; `unclear` otherwise. The wording is in `study/prompt.py` (`build_site_prompt`), and the contract embeds it verbatim. The prompt treats any text in either photograph as scenery. A frame whose answer is anything but `yes` is refused, the fee is burned, and the builder may shoot again.
+
+Calibrated on 26 pairs of genuine photographs (12 same site, 14 unrelated of which 5 look alike), each asked twice on Studionet: no unrelated pair was accepted, and most same-site pairs were. It is a small sample; the site check stops a photograph of the wrong place, not a faked photograph of the right place (see [TRUST_MODEL.md](TRUST_MODEL.md)).
+
+### 7.2 Deterministic edge-overlap alignment (off)
+
+Implemented in `contracts/src/align.py` (`align_min_permille`, 0 means off): decode both images to 64 by 64 grayscale, keep the strongest 20 percent of edges, and take the best overlap over small integer shifts, as an integer from 0 to 1000. The anchor may be a PNG or the DC image of a JPEG anchor; the frame is represented by its thumbnail, which the contract has verified to be a copy of the frame (section 6.1).
+
+**Calibrated on the same 26 pairs, it cannot separate the classes** (AUC 0.57; the best threshold accepts half the matching pairs and a fifth of the unrelated ones). A photograph is never pixel-aligned with an earlier one of the same site, so only a fixed camera would work. The mechanism stays off. Where it is off the contract reports `alignment_enforced: false`.
+
+### 7.3 What clients must show
+
+Clients must show whether the site is checked: **Site check on** when `site_check` or `alignment_enforced` is true, **Site not checked** otherwise, and in the result card a *Same site as the anchor* row with the panel's `same_site` answer, or *Not checked yet* when the answer is `off`.
 
 ## 8. Capture signing modes
 
@@ -181,6 +194,7 @@ A fallback code is predictable to a builder who can compute it. That is acceptab
 ## 10. Invariants
 
 1. No frame reaches the model without passing signature, size, format, thumbnail and (when enforced) alignment checks.
+   With the site check on, a frame also needs the panel's `same_site` `yes` to pass.
 2. The signature binds image bytes, stage, code, deadline and contract; it does not carry to another stage, code or job.
 3. No payment before finality (except the direct settlement after the force delay, 7 days in production); a stage pays at most once.
 4. Nothing moves while `settling`, and a stage cannot stay `SETTLING` forever.
@@ -206,8 +220,8 @@ With throwaway accounts (logs in `contracts/live/`):
 
 - Web mode cannot authenticate a photo's source. Attested capture (Android) is paused as a mainnet gate; the draft app has never been compiled or run on a device, and no real device chain has been registered.
 - The frontend flows were run with real construction-site photographs and simulated handwriting (a handwriting-style font on the wall). True handwritten codes photographed on a real wall have not been tried; the real-wall trial covers them.
-- Capture authentication and site verification are **not complete and are stated as limitations**: web mode cannot prove a photograph came from a camera (the signature authenticates the bytes, not the source), and site alignment is off because its threshold is uncalibrated.
-- Alignment is uncalibrated and off.
+- Capture authentication is **not complete and is stated as a limitation**: web mode cannot prove a photograph came from a camera (the signature authenticates the bytes, not the source). Attested capture is a mainnet gate. See [TRUST_MODEL.md](TRUST_MODEL.md).
+- Site verification is enforced through the panel's same-site question on web jobs (calibrated on 26 genuine pairs, [SITE_VERIFICATION.md](SITE_VERIFICATION.md)); the deterministic alignment was calibrated and cannot separate the classes, so it stays off. A job can be created without the site check, and then every page says so.
 - Wallet connection is optional: any EIP-1193 wallet is asked for an account and for Studionet to be added; the GenLayer client then routes writes to `eth_sendTransaction`. Verified with a mock wallet that signs locally (deploy recorded the wallet as payer) and used by the maintainer with a real browser wallet. The GenLayer Snap is not requested; other wallets are untested.
 - Revocation is unhandled; iOS is unimplemented.
 - A panel disagreement is free to retry.

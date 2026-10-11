@@ -1,0 +1,175 @@
+{
+ "probe": "0x26377011014345be51E8Ede1BFD16F9813Ab8e87",
+ "results": [
+  {
+   "id": "P01",
+   "title": "Mud house with iron-sheet roof, right code on the wall",
+   "stage": "roof",
+   "expect_stage": "yes",
+   "expect_code": "yes",
+   "verdict": "{\"stage_met\": \"yes\", \"code_visible\": \"yes\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "idle": 2,
+    "agree": 3
+   },
+   "hash": "0x4ba52d88b384fa491c33042550d74f057c023216bfa69e09d2f4ddf9ea134d18",
+   "seconds": 39
+  },
+  {
+   "id": "P02",
+   "title": "Brick house with a complete roof covering, right code on the brick gable",
+   "stage": "roof",
+   "expect_stage": "yes",
+   "expect_code": "yes",
+   "verdict": "{\"stage_met\": \"yes\", \"code_visible\": \"yes\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 1,
+    "disagree": 1
+   },
+   "hash": "0x22ddad1ec2d6955fc324f2c24b04844340f543d3b44c5b1158f3397d4c46e378",
+   "seconds": 28
+  },
+  {
+   "id": "P03",
+   "title": "Brick wall with no roof at all, right code on the wall",
+   "stage": "roof",
+   "expect_stage": "no",
+   "expect_code": "yes",
+   "verdict": "{\"stage_met\": \"no\", \"code_visible\": \"yes\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "hash": "0x89787bc6d2ec5efaa366b46415e84a4992324b3fb0a6629fa3efe13388f8c284",
+   "seconds": 26
+  },
+  {
+   "id": "P04",
+   "title": "A town street from above, right code on a building",
+   "stage": "roof",
+   "expect_stage": "no",
+   "expect_code": "yes",
+   "verdict": "{\"stage_met\": \"no\", \"code_visible\": \"yes\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "disagree": 2
+   },
+   "hash": "0xfa9f1a1df6ffb4c082c1a95982cccfff885a25607ba0882edcf9fe84322d6951",
+   "seconds": 79
+  },
+  {
+   "id": "P05",
+   "title": "Mud-walled compound with no roof, right code on a wall",
+   "stage": "roof",
+   "expect_stage": "no",
+   "expect_code": "yes",
+   "verdict": "{\"stage_met\": \"no\", \"code_visible\": \"yes\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "hash": "0xefb87f76ae9f09dfbcbecd18681ac7a50bba78a2a2e9fe6a49bb1938d9da53bf",
+   "seconds": 27
+  },
+  {
+   "id": "P06",
+   "title": "Mud house with roof, a WRONG code on the wall",
+   "stage": "roof",
+   "expect_stage": "yes",
+   "expect_code": "no",
+   "verdict": "{\"stage_met\": \"yes\", \"code_visible\": \"no\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 1,
+    "disagree": 1
+   },
+   "hash": "0x33b124f590f5fdf6f5d9d0dbfe00c714e68b52c08312582a6efe085fd7619d1f",
+   "seconds": 29
+  },
+  {
+   "id": "P07",
+   "title": "Mud house with roof, no code anywhere",
+   "stage": "roof",
+   "expect_stage": "yes",
+   "expect_code": "no",
+   "verdict": "{\"stage_met\": \"yes\", \"code_visible\": \"no\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "idle": 1,
+    "agree": 3,
+    "disagree": 1
+   },
+   "hash": "0x39ad1c856a333c6eb1c9fa3fe4a99b62e712da86201e09c1df91bf68ddd330fe",
+   "seconds": 51
+  },
+  {
+   "id": "P08",
+   "title": "Mud house with roof, right code, but the photograph is nearly black",
+   "stage": "roof",
+   "expect_stage": "unclear",
+   "expect_code": "unclear",
+   "verdict": "{\"stage_met\": \"unclear\", \"code_visible\": \"unclear\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "hash": "0x1008ec04c2749e91f533226945450627e751c0a8336000adeb5a343fcff6320f",
+   "seconds": 34
+  },
+  {
+   "id": "P09",
+   "title": "Right code visible but the roof is cropped out of the frame",
+   "stage": "roof",
+   "expect_stage": "no",
+   "expect_code": "yes",
+   "verdict": "{\"stage_met\": \"unclear\", \"code_visible\": \"no\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "idle": 1,
+    "agree": 3,
+    "disagree": 1
+   },
+   "hash": "0x8094ebb5e4d380a41962264631636b8439e5e9392c68953c84face4b0b7cba75",
+   "seconds": 83
+  },
+  {
+   "id": "P10",
+   "title": "Finished office building, glazing in every opening, right code on the white wall",
+   "stage": "openings",
+   "expect_stage": "yes",
+   "expect_code": "yes",
+   "verdict": "{\"stage_met\": \"yes\", \"code_visible\": \"yes\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "hash": "0xdec029b73ff9217c4f66aae90f0b52da7d51073a4250094dd55401faec53235a",
+   "seconds": 25
+  },
+  {
+   "id": "P11",
+   "title": "Brick wall whose window openings are empty holes, right code on the wall",
+   "stage": "openings",
+   "expect_stage": "no",
+   "expect_code": "yes",
+   "verdict": "{\"stage_met\": \"no\", \"code_visible\": \"yes\"}",
+   "status": "FINALIZED",
+   "votes": {
+    "agree": 3,
+    "disagree": 1,
+    "idle": 1
+   },
+   "hash": "0xb1000a862e1c77832537437476cbe7d16490e3b6d49a647ef60be242aa0199d8",
+   "seconds": 76
+  }
+ ]
+}

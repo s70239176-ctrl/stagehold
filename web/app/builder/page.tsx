@@ -306,7 +306,7 @@ export default function BuilderPage() {
                 <div className="verdict">
                   <Row label="The stage is complete" value={result.stage_met} />
                   <Row label="The code is written on the work" value={result.code_visible} />
-                  <Row label="Same site as the anchor" value={result.site_aligned} na={!snapshot?.alignment_enforced} />
+                  <Row label="Same site as the anchor" value={result.same_site ?? result.site_aligned} na={result.same_site ? result.same_site === "off" : !snapshot?.alignment_enforced} />
                 </div>
                 <p className="muted small">{result.paid ? "Payment releases to you when the result is final." : "Nothing was paid. You can take another picture."}</p>
               </div>

@@ -1,0 +1,90 @@
+[
+ {
+  "id": "P01",
+  "title": "Mud house with iron-sheet roof, right code on the wall",
+  "stage": "roof",
+  "code_asked": "TREE BLUE",
+  "expect_stage": "yes",
+  "expect_code": "yes"
+ },
+ {
+  "id": "P02",
+  "title": "Brick house with a complete roof covering, right code on the brick gable",
+  "stage": "roof",
+  "code_asked": "TREE BLUE",
+  "expect_stage": "yes",
+  "expect_code": "yes"
+ },
+ {
+  "id": "P03",
+  "title": "Brick wall with no roof at all, right code on the wall",
+  "stage": "roof",
+  "code_asked": "TREE BLUE",
+  "expect_stage": "no",
+  "expect_code": "yes"
+ },
+ {
+  "id": "P04",
+  "title": "A town street from above, right code on a building",
+  "stage": "roof",
+  "code_asked": "TREE BLUE",
+  "expect_stage": "no",
+  "expect_code": "yes"
+ },
+ {
+  "id": "P05",
+  "title": "Mud-walled compound with no roof, right code on a wall",
+  "stage": "roof",
+  "code_asked": "TREE BLUE",
+  "expect_stage": "no",
+  "expect_code": "yes"
+ },
+ {
+  "id": "P06",
+  "title": "Mud house with roof, a WRONG code on the wall",
+  "stage": "roof",
+  "code_asked": "TREE BLUE",
+  "expect_stage": "yes",
+  "expect_code": "no"
+ },
+ {
+  "id": "P07",
+  "title": "Mud house with roof, no code anywhere",
+  "stage": "roof",
+  "code_asked": "TREE BLUE",
+  "expect_stage": "yes",
+  "expect_code": "no"
+ },
+ {
+  "id": "P08",
+  "title": "Mud house with roof, right code, but the photograph is nearly black",
+  "stage": "roof",
+  "code_asked": "TREE BLUE",
+  "expect_stage": "unclear",
+  "expect_code": "unclear"
+ },
+ {
+  "id": "P09",
+  "title": "Right code visible but the roof is cropped out of the frame",
+  "stage": "roof",
+  "code_asked": "TREE BLUE",
+  "expect_stage": "no",
+  "expect_code": "yes"
+ },
+ {
+  "id": "P10",
+  "title": "Finished office building, glazing in every opening, right code on the white wall",
+  "stage": "openings",
+  "code_asked": "TREE BLUE",
+  "expect_stage": "yes",
+  "expect_code": "yes"
+ },
+ {
+  "id": "P11",
+  "title": "Brick wall whose window openings are empty holes, right code on the wall",
+  "stage": "openings",
+  "code_asked": "TREE BLUE",
+  "expect_stage": "no",
+  "expect_code": "yes"
+ }
+]

@@ -92,7 +92,7 @@ async function expectError(who, address, fn, args, needle) {
 
 async function deploy(payer, builder, expiresIn, windowS) {
   const h = await paced("deploy", () => payer.client.deployContract({
-    code: contractSource, args: [builder.account.address, FEE, expiresIn, "", "", 0n, true, windowS, true],
+    code: contractSource, args: [builder.account.address, FEE, expiresIn, "", "", 0n, true, windowS, true, false],
   }));
   const r = await paced("deploy wait", () => payer.client.waitForTransactionReceipt({ hash: h, status: TransactionStatus.ACCEPTED, retries: 90, interval: 8000 }));
   const address = r?.data?.contract_address ?? r?.txDataDecoded?.contractAddress;

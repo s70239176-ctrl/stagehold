@@ -153,10 +153,26 @@ export function grabFrame(video: HTMLVideoElement): HTMLCanvasElement {
   return c;
 }
 
-/** The payer's anchor: any photo file is shrunk to the same grayscale thumbnail the contract expects. */
+/**
+ * The payer's anchor: any photo file becomes a colour baseline JPEG of at most 100 KB with a 640 px long edge.
+ * The validators compare it with the builder's frame to decide whether both show the same site, so it keeps
+ * its colour and enough detail to recognise the surroundings. Anyone can read it on-chain.
+ */
+export const MAX_ANCHOR_JPEG = 100 * 1024;
 export async function anchorFromFile(file: File): Promise<Uint8Array> {
   const bitmap = await createImageBitmap(file);
   const c = canvasOf(bitmap.width, bitmap.height);
   c.getContext("2d")!.drawImage(bitmap, 0, 0);
-  return thumbnailPng(c);
+  let canvas = toLongEdge(c, 640);
+  let quality = 0.8;
+  for (let i = 0; i < 40; i++) {
+    const data = await blobOf(canvas, "image/jpeg", quality);
+    if (data.length <= MAX_ANCHOR_JPEG) return data;
+    if (quality > 0.4) quality -= 0.05;
+    else {
+      canvas = scaledCopy(canvas, 0.88);
+      quality = 0.7;
+    }
+  }
+  throw new Error("could not fit the anchor under the size limit");
 }

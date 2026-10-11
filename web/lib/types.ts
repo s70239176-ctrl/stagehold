@@ -19,6 +19,9 @@ export interface Snapshot {
   payer_window?: number;
   dev_mode: boolean;
   software_keys: boolean;
+  site_check?: boolean;
+  dev_fault?: boolean;
+  anchor_kind?: string;
   capture_attested: boolean;
   alignment_enforced: boolean;
   anchor_hash: string;
@@ -37,6 +40,8 @@ export interface Snapshot {
 export interface AttemptView {
   stage_met: "yes" | "no" | "unclear";
   code_visible: "yes" | "no" | "unclear";
+  /** The validators' answer to "is this the same site as the anchor"; "off" when the job does not ask. */
+  same_site?: "yes" | "no" | "unclear" | "off";
   site_aligned: boolean;
   paid: boolean;
   attempt: number;

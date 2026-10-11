@@ -151,6 +151,8 @@ export async function deployJob(
   /** A TEST job (dev_mode) may use short windows; its snapshot says dev_mode and the pages label it. */
   test: { payerWindowSeconds: number } | null,
   onPhase?: (p: Phase, detail?: string) => void,
+  /** Ask the validators whether every frame shows the same site as the anchor. On unless the payer turns it off. */
+  siteCheck = true,
 ): Promise<string> {
   const code = await (await fetch("/stagehold.py")).text();
   if (!code.includes("class Stagehold")) throw new Error("The contract source is missing; run npm run sync-contract.");
@@ -160,8 +162,8 @@ export async function deployJob(
   const hash = await paced(() =>
     client.deployContract({
       code,
-      // builder, fee, expires_in, app_package, app_sig_digest, align_min_permille, dev_mode, payer_window_s, software_keys
-      args: [builder, feeUnits, expiresInSeconds, "", "", 0n, test !== null, BigInt(test?.payerWindowSeconds ?? 86400), true] as never,
+      // builder, fee, expires_in, app_package, app_sig_digest, align_min_permille, dev_mode, payer_window_s, software_keys, site_check
+      args: [builder, feeUnits, expiresInSeconds, "", "", 0n, test !== null, BigInt(test?.payerWindowSeconds ?? 86400), true, siteCheck] as never,
     }),
   );
   onPhase?.("pending");

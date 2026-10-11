@@ -113,7 +113,7 @@ def call(who, fn, *args, value=0):
 def new_job(dev=True):
     STATE["sender"] = PAYER
     gl.message_raw = {"datetime": iso(STATE["now"]), "contract_address": SELF}
-    job = Stagehold(BUILDER, 10, 100_000 if dev else 30 * 86400, "", "", 0, dev, 3600, True)
+    job = Stagehold(BUILDER, 10, 100_000 if dev else 30 * 86400, "", "", 0, dev, 3600, True, False)
     job.stages = TreeMap()
     job.keys = TreeMap()
     job.seen = TreeMap()
@@ -268,6 +268,31 @@ j5.stages["roof"].funded = 0
 j5.balance = 40
 ok, msg = call(PAYER, j5.reclaim_surplus)
 check("credits are never treated as surplus", not ok, msg)
+
+# ------------------------------------------------------------------ intentionally failed payout (test jobs only)
+EVENTS.clear()
+jf = new_job()
+fund(jf, ["roof"], [700])
+settling(jf, "roof", STATE["now"])
+ok, msg = call(STRANGER, jf.dev_set_fault, True)
+check("only the payer can set the fault", not ok and "only the payer" in msg, msg)
+ok, msg = call(PAYER, jf.dev_set_fault, True)
+check("the payer of a test job can inject a fault", ok and jf.dev_fault is True, msg)
+ok, msg = call(SELF, jf.finalize_stage, "roof", 1)
+check("with the fault on, the finalized payout fails and the stage stays SETTLING", not ok and "injected" in msg and jf.stages["roof"].status == "SETTLING" and transfers() == [], msg)
+STATE["now"] += 11
+ok, msg = call(STRANGER, jf.recover_settlement, "roof")
+ok2, msg2 = call(SELF, jf.finalize_stage, "roof", 1)
+check("a retried payout fails the same way while the fault is on", ok and msg == "payout retried" and not ok2 and transfers() == [], f"{msg} / {msg2}")
+STATE["now"] += 40
+ok, msg = call(STRANGER, jf.recover_settlement, "roof")
+check("forced recovery settles directly even with the fault on", ok and msg == "settled directly" and transfers() == [(BUILDER, 700)] and jf.status == "DONE", f"{msg} {transfers()}")
+call(PAYER, jf.dev_set_fault, False)
+ok, msg = call(SELF, jf.finalize_stage, "roof", 1)
+check("the delayed original payout, arriving after the fault is cleared, is refused and pays nothing", not ok and "not settling" in msg and transfers() == [(BUILDER, 700)], msg)
+jp2 = new_job(dev=False)
+ok, msg = call(PAYER, jp2.dev_set_fault, True)
+check("a production job has no fault injector", not ok and "only test jobs" in msg, msg)
 
 print("\nFAILURES:", fails)
 raise SystemExit(1 if fails else 0)

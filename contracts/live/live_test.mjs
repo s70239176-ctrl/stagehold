@@ -118,7 +118,7 @@ note("payer", null, payer.address);
 note("builder", null, builder.address);
 const FEE = 10n;
 const dhash = await paced("deploy", () =>
-  payerClient.deployContract({ code, args: [builder.address, FEE, 2592000n, "", "", 0n, true, 86400n, true] }),
+  payerClient.deployContract({ code, args: [builder.address, FEE, 2592000n, "", "", 0n, true, 86400n, true, false] }),
 );
 const drec = await paced("deploy wait", () =>
   payerClient.waitForTransactionReceipt({ hash: dhash, status: TransactionStatus.ACCEPTED, retries: 90, interval: 8000 }),

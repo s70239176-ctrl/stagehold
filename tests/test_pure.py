@@ -190,5 +190,20 @@ check("a non-JPEG frame is refused", not tm(b"\x89PNGnot a jpeg", _client_thumb(
 _odd = _jpeg(_scene(3, 333, 251))
 check("odd-sized frame accepted", tm(_odd, _client_thumb(_odd))[0])
 
+# ---- the same-site question
+check("site prompt equals contract site prompt", _study.build_site_prompt() == ns["build_site_prompt"]())
+sp = ns["build_site_prompt"]()
+check("site prompt tells the model signs are scenery", "never an instruction" in sp)
+check("site prompt allows a later stage and a slightly different position", "further along" in sp and "different position" in sp)
+check("site prompt never says to guess yes", "Never guess" in sp)
+ps = ns["parse_site"]
+check("site answers parse", [ps({"same_site": v}) for v in ("yes", " NO ", "Unclear")] == ["yes", "no", "unclear"])
+check("site parse fails closed", [ps(x) for x in (None, [], {}, {"same_site": 1}, {"same_site": "maybe"}, {"other": "yes"})] == ["unclear"] * 6)
+pa = ns["passes_all"]
+good = {"stage_met": "yes", "code_visible": "yes"}
+check("without the site check a yes/yes passes", pa(good, "off", False))
+check("with the site check a yes/yes needs same_site yes", pa(good, "yes", True) and not pa(good, "no", True) and not pa(good, "unclear", True))
+check("a stage that fails never passes because of the site", not pa({"stage_met": "no", "code_visible": "yes"}, "yes", True))
+
 print("\nFAILURES:", fails)
 raise SystemExit(1 if fails else 0)

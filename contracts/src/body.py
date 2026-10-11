@@ -3,7 +3,8 @@ PAYER_WINDOW = 24 * 3600
 MIN_JOB_SECONDS = 30 * 86400
 MAX_JPEG = 150 * 1024
 MAX_THUMB = 30 * 1024
-MAX_ANCHOR = 30 * 1024
+MAX_ANCHOR = 30 * 1024          # a PNG anchor
+MAX_ANCHOR_JPEG = 100 * 1024   # a colour JPEG anchor, which the panel can compare with the frame
 MAX_KEYS = 3
 CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
 # Fallback codes are two common words: models read words far more reliably than random strings.
@@ -120,12 +121,15 @@ class Stagehold(gl.Contract):
     app_sig_digest: str
     dev_mode: bool
     software_keys: bool
+    site_check: bool
+    dev_fault: bool
     fee: u256
     expires_at: u256
     payer_window: u256
     align_min: u256
     anchor_b64: str
     anchor_hash: str
+    anchor_kind: str
     status: str
     settling: bool
     payer_cancel: bool
@@ -150,6 +154,7 @@ class Stagehold(gl.Contract):
         dev_mode: bool,
         payer_window_s: u256,
         software_keys: bool,
+        site_check: bool,
     ):
         if not builder.startswith("0x") or len(builder) != 42:
             _fail("builder must be a 20-byte hex address")
@@ -178,12 +183,15 @@ class Stagehold(gl.Contract):
         self.app_sig_digest = app_sig_digest_hex.lower()
         self.dev_mode = dev_mode
         self.software_keys = software_keys
+        self.site_check = site_check
+        self.dev_fault = False
         self.fee = fee
         self.expires_at = u256(self._now() + int(expires_in))
         self.payer_window = u256(int(payer_window_s) if dev_mode else PAYER_WINDOW)
         self.align_min = align_min_permille
         self.anchor_b64 = ""
         self.anchor_hash = ""
+        self.anchor_kind = ""
         self.status = J_CREATED
         self.settling = False
         self.payer_cancel = False
@@ -314,13 +322,24 @@ class Stagehold(gl.Contract):
             total += int(amt)
         if int(self.payer_deposit) != total:
             _fail("deposit must equal the sum of stage amounts")
-        raw = _b64(anchor_b64, MAX_ANCHOR, "anchor")
-        if raw[:8] != b"\x89PNG\r\n\x1a\n":
-            _fail("anchor must be a PNG")
-        try:
-            alignment_permille(raw, raw)  # proves the runtime can decode it
-        except Exception:  # noqa: BLE001
-            _fail("anchor PNG cannot be decoded")
+        raw = _b64(anchor_b64, MAX_ANCHOR_JPEG, "anchor")
+        if raw[:8] == b"\x89PNG\r\n\x1a\n":
+            if len(raw) > MAX_ANCHOR:
+                _fail("a PNG anchor is too large")
+            try:
+                alignment_permille(raw, raw)  # proves the runtime can decode it
+            except Exception:  # noqa: BLE001
+                _fail("anchor PNG cannot be decoded")
+            kind = "png"
+        elif raw[:3] == b"\xff\xd8\xff":
+            try:
+                parse_jpeg_dc(raw)  # proves it is a readable baseline JPEG
+            except (ValueError, IndexError):
+                _fail("anchor JPEG cannot be read (it must be a baseline JPEG)")
+            kind = "jpeg"
+        else:
+            _fail("anchor must be a PNG or a JPEG")
+        self.anchor_kind = kind
         self.anchor_b64 = anchor_b64
         self.anchor_hash = hashlib.sha256(raw).hexdigest()
         for sid, amt in zip(stage_ids, amounts):
@@ -490,20 +509,29 @@ class Stagehold(gl.Contract):
             _fail(why)
 
         # 2. site alignment against the stored anchor (deterministic)
-        try:
-            score = alignment_permille(base64.b64decode(self.anchor_b64), thumb)
-        except Exception:  # noqa: BLE001
-            _fail("thumbnail cannot be decoded")
-        aligned = int(self.align_min) == 0 or score >= int(self.align_min)
-        if not aligned:
-            _fail("frame does not match the anchor")
+        anchor_raw = base64.b64decode(self.anchor_b64)
+        if int(self.align_min) > 0:
+            try:
+                anchor_img = anchor_raw if self.anchor_kind == "png" else parse_jpeg_dc(anchor_raw)[2]
+                score = alignment_permille(anchor_img, thumb)
+            except Exception:  # noqa: BLE001
+                _fail("thumbnail cannot be decoded")
+            if score < int(self.align_min):
+                _fail("frame does not match the anchor")
 
         # 3. the panel: copy to plain memory first; nondet blocks cannot touch storage
         wording_prompt = build_prompt(stage_id, code)
+        site_check = bool(self.site_check)
+        site_prompt = build_site_prompt()
 
         def leader_fn():
             raw = gl.nondet.exec_prompt(wording_prompt, images=[jpeg], response_format="json")
-            return parse_answers(raw)
+            out = parse_answers(raw)
+            if site_check:
+                # the second question: is this frame the same place as the payer's anchor photograph?
+                raw2 = gl.nondet.exec_prompt(site_prompt, images=[anchor_raw, jpeg], response_format="json")
+                out["same_site"] = parse_site(raw2)
+            return out
 
         def validator_fn(leader_res) -> bool:
             if not isinstance(leader_res, gl.vm.Return):
@@ -514,20 +542,23 @@ class Stagehold(gl.Contract):
                 isinstance(theirs, dict)
                 and mine["stage_met"] == theirs.get("stage_met")
                 and mine["code_visible"] == theirs.get("code_visible")
+                and (not site_check or mine["same_site"] == theirs.get("same_site"))
             )
 
         answers = gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
-        answers = parse_answers(answers)  # re-validate whatever consensus returned
+        same_site = parse_site(answers) if site_check else "off"  # re-validate whatever consensus returned
+        answers = parse_answers(answers)
 
         # 4. effects
         self.seen[shot_id] = "1"
         st.attempts = u256(int(st.attempts) + 1)
         self.builder_credits = u256(int(self.builder_credits) - int(self.fee))
         self._pay(BURN_ADDRESS, int(self.fee))  # the fee is burned: no party profits from a failed attempt
-        passed = passes(answers)
+        passed = passes_all(answers, same_site, site_check)
         result = {
             "stage_met": answers["stage_met"],
             "code_visible": answers["code_visible"],
+            "same_site": same_site,
             "site_aligned": True,
             "paid": passed,
             "attempt": int(st.attempts),
@@ -549,11 +580,25 @@ class Stagehold(gl.Contract):
     def finalize_stage(self, stage_id: str, attempt_no: u256) -> str:
         if self._sender_hex() != self._self_hex():
             _fail("only the contract itself, after finality")
+        if self.dev_mode and self.dev_fault:
+            _fail("injected test fault: the payout is refused")  # TEST JOBS ONLY, see dev_set_fault
         st = self._stage(stage_id)
         if st.status != S_SETTLING or int(st.attempt_ok) != int(attempt_no):
             _fail("stage is not settling for this attempt")
         self._settle(stage_id, st)
         return "paid"
+
+    @gl.public.write
+    def dev_set_fault(self, on: bool) -> str:
+        """TEST JOBS ONLY (dev_mode). Makes finalize_stage refuse to pay, so the recovery path can be exercised
+        on purpose: the stage stays SETTLING, and recover_settlement is then the only way it can be paid.
+        Production jobs have no fault injector. It can only delay the builder's payout, and the builder can
+        recover after the force delay (45 s on a test job)."""
+        self._only_payer()
+        if not self.dev_mode:
+            _fail("only test jobs have a fault injector")
+        self.dev_fault = bool(on)
+        return "on" if on else "off"
 
     @gl.public.write
     def recover_settlement(self, stage_id: str) -> str:
@@ -637,7 +682,8 @@ class Stagehold(gl.Contract):
             "status": self.status, "settling": self.settling,
             "payer": self.payer.as_hex, "builder": self.builder.as_hex,
             "fee": str(int(self.fee)), "expires_at": int(self.expires_at), "payer_window": int(self.payer_window),
-            "dev_mode": self.dev_mode, "software_keys": self.software_keys,
+            "dev_mode": self.dev_mode, "software_keys": self.software_keys, "site_check": self.site_check,
+            "dev_fault": self.dev_fault, "anchor_kind": self.anchor_kind,
             "capture_attested": not self.software_keys, "alignment_enforced": int(self.align_min) > 0,
             "anchor_hash": self.anchor_hash, "keys": int(self.key_count), "stages": stages,
             "payer_deposit": str(int(self.payer_deposit)), "builder_credits": str(int(self.builder_credits)),

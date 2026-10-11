@@ -34,6 +34,7 @@ export default function PayerPage() {
   const [fee, setFee] = useState("0.01");
   const [days, setDays] = useState("30");
   const [testJob, setTestJob] = useState(false);
+  const [siteCheck, setSiteCheck] = useState(true);
   const [windowS, setWindowS] = useState("40");
   const [expireS, setExpireS] = useState("600");
 
@@ -94,7 +95,7 @@ export default function PayerPage() {
       const bytes = await anchorFromFile(file);
       setAnchorBytes(bytes);
       if (anchorUrl) URL.revokeObjectURL(anchorUrl);
-      setAnchorUrl(URL.createObjectURL(new Blob([bytes as BlobPart], { type: "image/png" })));
+      setAnchorUrl(URL.createObjectURL(new Blob([bytes as BlobPart], { type: "image/jpeg" })));
     } catch (e) {
       toast.push({ kind: "bad", title: "That image could not be read", body: e instanceof Error ? e.message : String(e) });
     }
@@ -106,7 +107,7 @@ export default function PayerPage() {
     const expiresIn = testJob ? BigInt(Math.round(Number(expireS))) : BigInt(Math.round(Number(days) * 86400));
     if (!testJob && Number(days) < 30) throw new Error("A job must last at least 30 days.");
     const test = testJob ? { payerWindowSeconds: Math.round(Number(windowS)) } : null;
-    const addr = await deployJob(key, builder, feeWei, expiresIn, test, phase("Creating the job"));
+    const addr = await deployJob(key, builder, feeWei, expiresIn, test, phase("Creating the job"), siteCheck);
     window.localStorage.setItem(JOB_KEY, addr);
     setContract(addr);
     toast.push({ kind: "ok", title: "Job created", body: "Fund a stage next, then send the builder the link." });
@@ -116,7 +117,7 @@ export default function PayerPage() {
     if (!fundValid || !anchorBytes) throw new Error("Choose at least one stage with an amount, and add the anchor photograph.");
     await tx("Depositing", "deposit", [], totalWei);
     await tx("Funding the stages", "fund", [picked.map((s) => s.id), pickedWei.map((w) => String(w)), toB64(anchorBytes)]);
-    toast.push({ kind: "ok", title: `${formatGen(totalWei)} GEN held in escrow`, body: "The anchor thumbnail is now stored on-chain." });
+    toast.push({ kind: "ok", title: `${formatGen(totalWei)} GEN held in escrow`, body: "The anchor photograph is now stored on-chain." });
   }
 
   async function issue() {
@@ -181,6 +182,7 @@ export default function PayerPage() {
                 <details>
                   <summary className="small muted" style={{ cursor: "pointer" }}>Advanced: test timing</summary>
                   <div className="stack" style={{ marginTop: 12 }}>
+                    <label className="row small"><input type="checkbox" checked={!siteCheck} onChange={(e) => setSiteCheck(!e.target.checked)} /> Do not ask the validators whether each photo shows the same site as the anchor (every page then says the site is not checked)</label>
                     <label className="row small"><input type="checkbox" checked={testJob} onChange={(e) => setTestJob(e.target.checked)} /> Test job with short windows (clearly labelled to everyone)</label>
                     {testJob ? (
                       <Field label="Fallback code unlocks after (seconds)">
@@ -217,13 +219,13 @@ export default function PayerPage() {
                         );
                       })}
                     </div>
-                    <Field label="Anchor photograph" hint="One picture of the real site that you trust. It is shrunk to a small grayscale thumbnail and stored on-chain, so anyone can see it.">
+                    <Field label="Anchor photograph" hint="One picture of the real site that you trust, taken from where the builder will stand. It is shrunk to a colour JPEG of at most 100 KB and stored on-chain, so anyone can see it. The validators compare each later photo with it.">
                       <input className="input file" type="file" accept="image/*" onChange={(e) => void onAnchor(e.target.files?.[0])} />
                     </Field>
                     {anchorUrl ? (
                       <div className="row">
-                        <img src={anchorUrl} alt="Anchor thumbnail" style={{ height: 84, borderRadius: 8, border: "1px solid var(--line-strong)" }} />
-                        <span className="small muted">Stored thumbnail, about {Math.round((anchorBytes?.length ?? 0) / 1024)} KB.</span>
+                        <img src={anchorUrl} alt="Anchor photograph" style={{ height: 84, borderRadius: 8, border: "1px solid var(--line-strong)" }} />
+                        <span className="small muted">Stored photograph, about {Math.round((anchorBytes?.length ?? 0) / 1024)} KB.</span>
                       </div>
                     ) : null}
                     <div className="spread">

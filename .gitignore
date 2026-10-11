@@ -42,3 +42,12 @@ spikes/*.log
 evidence/results/scenes/
 evidence/node_modules/
 contracts/live/live_hardening_result.json
+
+# photographs for calibration (CC-licensed, fetched; sources in each ATTRIBUTION.csv)
+fixtures/sites/*.jpg
+calibration/pairs/*.jpg
+calibration/site_probe.py
+calibration/judge_probe.py
+calibration/photos/*.jpg
+contracts/live/live_site_result.json
+contracts/live/assets/site_*

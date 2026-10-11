@@ -3,6 +3,7 @@
 //   E. a failed payable transaction keeps its value: it shows up as surplus and only the payer can reclaim it
 //   F. a stage stuck SETTLING can be recovered by a retry of the payout without paying twice
 //   G. ... and by direct settlement past the force delay, after which the late original payout is refused
+//   H. an intentionally failed finalized payout (test-job fault injector), then forced recovery; nothing is paid twice
 // Payout/refund is verified via the contract's own balance (Studionet does not credit ordinary accounts).
 //
 //   node contracts/live/live_hardening.mjs [D] [E] [F] [G]      (default: all)
@@ -75,6 +76,28 @@ async function leaderText(hash) {
     return `${l?.execution_result ?? "?"}${buf ? ": " + buf.slice(buf[0] <= 8 ? 1 : 0).toString("utf8").slice(0, 160) : ""}`;
   } catch (e) { return "leader receipt unavailable"; }
 }
+const errOf = (l) => {
+  const pl = typeof l?.result === "string" ? l.result : l?.result?.payload;
+  return pl ? Buffer.from(pl, "base64").toString("utf8").replace(/[\u0000-\u001f]+/g, " ").trim().slice(0, 120) : "";
+};
+/** The messages a transaction emitted (finalized payouts, retries, transfers) and how each ended. */
+async function triggeredOf(hash) {
+  const tx = await paced("tx", () => reader.request({ method: "eth_getTransactionByHash", params: [hash] }));
+  const out = [];
+  for (const h of tx?.triggered_transactions ?? []) {
+    const k = await paced("tx", () => reader.request({ method: "eth_getTransactionByHash", params: [h] }));
+    const lr = k?.consensus_data?.leader_receipt;
+    const l = Array.isArray(lr) ? (lr.find((r) => r?.mode === "leader") ?? lr[0]) : lr;
+    out.push({ hash: h, kind: String(k?.value ?? 0) !== "0" ? "transfer" : "call", status: k?.status, exec: l?.execution_result, error: l?.execution_result === "ERROR" ? errOf(l) : "" });
+  }
+  return { status: tx?.status, triggered: out };
+}
+async function waitFinal(hash, timeoutS = 600) {
+  const t0 = Date.now();
+  let r = await triggeredOf(hash);
+  while ((r.status !== "FINALIZED" || r.triggered.length === 0) && Date.now() - t0 < timeoutS * 1000) { await sleep(15000); r = await triggeredOf(hash); }
+  return r;
+}
 async function waitBalance(address, expected, timeoutSec = 300) {
   const t0 = Date.now();
   let b = await balanceOf(address);
@@ -88,7 +111,7 @@ async function expectError(who, address, fn, args, needle, value = 0n) {
 }
 async function deploy(payer, builder, expiresIn, windowS) {
   const h = await paced("deploy", () => payer.client.deployContract({
-    code: contractSource, args: [builder.account.address, FEE, expiresIn, "", "", 0n, true, windowS, true],
+    code: contractSource, args: [builder.account.address, FEE, expiresIn, "", "", 0n, true, windowS, true, false],
   }));
   const r = await paced("deploy wait", () => payer.client.waitForTransactionReceipt({ hash: h, status: TransactionStatus.ACCEPTED, retries: 90, interval: 8000 }));
   const address = r?.data?.contract_address ?? r?.txDataDecoded?.contractAddress;
@@ -227,7 +250,7 @@ async function pathF(mode = "retry") {
   const { address } = await deploy(payer, builder, 2592000n, 86400n);
   const k = await setup(payer, builder, address, ["1000"], 30n);
   const t0 = Date.now();
-  await send(builder, address, "submit", shotArgs(address, k, "good.jpg", "good_thumb.png"));
+  const submitTx = await send(builder, address, "submit", shotArgs(address, k, "good.jpg", "good_thumb.png"));
   let sn = await snap(address);
   for (let i = 0; i < 12 && sn.stages.roof.attempts === 0; i++) { await sleep(15000); sn = await snap(address); }
   const st = sn.stages.roof;
@@ -266,13 +289,91 @@ async function pathF(mode = "retry") {
   note(`F ${mode}: recovery on a paid stage is refused`, again.ok, again.text);
   const acc = await accounting(address);
   note(`F ${mode}: accounting identity holds at the end`, acc.balance === "20" && acc.liabilities === "20" && acc.surplus === "0", ser(acc));
+  const fin = await waitFinal(submitTx.hash);
+  const calls = fin.triggered.filter((x) => x.kind === "call");
+  note(`F ${mode}: the original finalized payout message and what it did`, null,
+    `submit ${fin.status}; original message(s): ${calls.map((x) => `${x.status} ${x.exec}${x.error ? " (" + x.error + ")" : ""}`).join(" | ") || "none"}`);
+  return address;
+}
+
+// ================================================================ H. an intentionally failed finalized payout
+// The payer of a TEST job switches on the fault injector: finalize_stage refuses to pay. The stage stays SETTLING.
+// A retry fails the same way; past the force delay, recover_settlement settles it directly. Nothing is paid twice.
+async function pathH() {
+  console.log("\n=== H. intentionally failed finalized payout, then forced recovery ===");
+  const payer = actor(), builder = actor(), anyone = actor();
+  const { address } = await deploy(payer, builder, 2592000n, 86400n);
+  const k = await setup(payer, builder, address, ["1000"], 30n);
+  const f1 = await send(payer, address, "dev_set_fault", [true]);
+  let sn = await snap(address);
+  note("H the payer switches the fault injector on (test job only)", sn.dev_fault === true, `dev_fault=${sn.dev_fault} dev_mode=${sn.dev_mode}`);
+  const prod = await (async () => {
+    const p2 = actor(), b2 = actor();
+    const h = await paced("deploy", () => p2.client.deployContract({ code: contractSource, args: [b2.account.address, FEE, 2592000n, "", "", 0n, false, 86400n, true, false] }));
+    const r = await paced("deploy wait", () => p2.client.waitForTransactionReceipt({ hash: h, status: TransactionStatus.ACCEPTED, retries: 90, interval: 8000 }));
+    const a2 = r?.data?.contract_address ?? r?.txDataDecoded?.contractAddress;
+    return expectError(p2, a2, "dev_set_fault", [true], "only test jobs");
+  })();
+  note("H a production job has no fault injector", prod.ok, prod.text);
+
+  const t0 = Date.now();
+  const sub = await send(builder, address, "submit", shotArgs(address, k, "good.jpg", "good_thumb.png"));
+  sn = await snap(address);
+  for (let i = 0; i < 12 && sn.stages.roof.attempts === 0; i++) { await sleep(15000); sn = await snap(address); }
+  let st = sn.stages.roof;
+  note("H the panel passes the shot; the stage is SETTLING", st.status === "SETTLING", `took ${Math.round((Date.now() - t0) / 1000)}s stage=${st.status} settle_at=${st.settle_at}`);
+  const age = async () => (await chainNow()) - st.settle_at;
+
+  // a retry inside the retry window: it will fail the same way while the fault is on
+  let a = await age();
+  while (a < sn.settle_retry + 2) { await sleep(3000); a = await age(); }
+  const retry = await send(anyone, address, "recover_settlement", ["roof"]);
+  const retryText = await leaderText(retry.hash);
+  note("H retry: recover_settlement re-emits the finalized payout", /payout retried|settled directly/.test(retryText), `age~${a}s -> ${retryText}`);
+
+  // wait for the ORIGINAL finalized message to fire and fail
+  const subFinal = await waitFinal(sub.hash, 480);
+  const orig = subFinal.triggered.filter((x) => x.kind === "call");
+  note("H the original finalized payout FAILED on purpose and the stage is still SETTLING",
+    orig.length > 0 && orig.every((x) => x.exec === "ERROR" && /injected test fault/.test(x.error)) && (await snap(address)).stages.roof.status === "SETTLING",
+    `original message: ${orig.map((x) => `${x.status} ${x.exec} (${x.error})`).join(" | ") || "none yet"}; stage=${(await snap(address)).stages.roof.status}; lock=${(await snap(address)).settling}`);
+  const balBefore = await balanceOf(address);
+  note("H nothing was paid while the payout kept failing", balBefore === 1020n, `contract balance ${balBefore} (1000 stage + 20 credits left)`);
+
+  // past the force delay: direct settlement
+  a = await age();
+  while (a < sn.settle_force + 2) { await sleep(3000); a = await age(); }
+  const forced = await send(anyone, address, "recover_settlement", ["roof"]);
+  const forcedText = await leaderText(forced.hash);
+  sn = await snap(address);
+  note("H forced recovery: past the force delay the stage is settled directly, even though the payout keeps failing", /settled directly/.test(forcedText) && sn.stages.roof.status === "PAID" && sn.status === "DONE" && sn.settling === false, `age~${a}s -> ${forcedText}; stage=${sn.stages.roof.status} job=${sn.status} lock=${sn.settling}`);
+  const f2 = await send(payer, address, "dev_set_fault", [false]);
+  const bal = await waitBalance(address, 20n, 300);
+
+  // the retry's message fires later: it must not pay again, whatever the fault switch says
+  const retryFinal = await waitFinal(retry.hash, 480);
+  const retried = retryFinal.triggered.filter((x) => x.kind === "call");
+  await sleep(60000);
+  const bal2 = await balanceOf(address);
+  note("H the delayed retried payout cannot pay again", retried.every((x) => x.exec === "ERROR") && bal === 20n && bal2 === 20n,
+    `retried message: ${retried.map((x) => `${x.status} ${x.exec} (${x.error})`).join(" | ") || "none"}; builder paid once: contract balance ${bal} then ${bal2} (1000 stage + 30 credits - 10 fee - 1000 payout = 20)`);
+  const acc = await accounting(address);
+  note("H accounting identity holds at the end", acc.balance === "20" && acc.liabilities === "20" && acc.surplus === "0", ser(acc));
+  const main = [["deposit/fund/credits/key/code (setup)", null], ["submit", sub.hash], ["retry", retry.hash], ["forced recovery", forced.hash]];
+  for (const [label, h] of main.filter((x) => x[1])) {
+    const r = await waitFinal(h, 300);
+    const tx = await paced("tx", () => reader.request({ method: "eth_getTransactionByHash", params: [h] }));
+    const lr = tx?.consensus_data?.leader_receipt;
+    const l = Array.isArray(lr) ? (lr.find((x) => x?.mode === "leader") ?? lr[0]) : lr;
+    note(`H ${label} transaction reached ${tx?.status} with GenVM ${l?.execution_result}`, tx?.status === "FINALIZED" && l?.execution_result === "SUCCESS", h);
+  }
   return address;
 }
 
 const which = process.argv.slice(2).map((s) => s.toUpperCase());
 const run = (k) => which.length === 0 || which.includes(k);
 const addresses = {};
-for (const [k, fn] of [["D", pathD], ["E", pathE], ["F", () => pathF("retry")], ["G", () => pathF("force")]]) {
+for (const [k, fn] of [["D", pathD], ["E", pathE], ["F", () => pathF("retry")], ["G", () => pathF("force")], ["H", pathH]]) {
   if (!run(k)) continue;
   try { addresses[k] = await fn(); } catch (e) { note(`${k} aborted`, false, String(e?.message ?? e).slice(0, 400)); }
 }

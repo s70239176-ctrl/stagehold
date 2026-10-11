@@ -1,0 +1,348 @@
+{
+ "probe": "0x47b130E33a513B2d82182e2d414032520bc4056b",
+ "results": [
+  {
+   "id": "M1",
+   "label": "M_spot",
+   "note": "Highland Colour Coaters extension, steel frame then finished (same spot)",
+   "verdict": "same_site\": \"yes\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "idle": 2,
+    "agree": 3
+   },
+   "hash": "0xf4ada94acd5555d337127db5ca28245d9bb521b70f9334f26b7ad5c767b59090",
+   "seconds": 50
+  },
+  {
+   "id": "M2",
+   "label": "M_spot",
+   "note": "Site 33W, October 2010 then January 2011 (same vantage)",
+   "verdict": "same_site\": \"yes\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "hash": "0x21022634c8b424e91a38e4958f4c9e24464487f5b52e5968cda5a13b011690f5",
+   "seconds": 34
+  },
+  {
+   "id": "M3",
+   "label": "M_spot",
+   "note": "Liversedge cemetery field, June 2021, two shots",
+   "verdict": "same_site\": \"unclear\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "disagree": 2
+   },
+   "hash": "0x305b0966164eff1a22b1712e159d5a33abc22c282bd2c198149dbc968432e1b6",
+   "seconds": 37
+  },
+  {
+   "id": "M4",
+   "label": "M_spot",
+   "note": "Liversedge cemetery field, March then June 2021",
+   "verdict": "same_site\": \"yes\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "hash": "0x6638b5e0a956f2014c06f79d3707c4db5ba85cdf4e6310f1d02436923f93469b",
+   "seconds": 31
+  },
+  {
+   "id": "M5",
+   "label": "M_spot",
+   "note": "Liversedge cemetery field, November 2020 then March 2021",
+   "verdict": "same_site\": \"yes\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "hash": "0xfb1d40092830e2dc5d572894dd10c0d4d34a5d04530c5a55ad1fc6c34d30584e",
+   "seconds": 37
+  },
+  {
+   "id": "M6",
+   "label": "M_spot",
+   "note": "Cowes Esplanade, the blue container, May then August 2010",
+   "verdict": "same_site\": \"yes\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "hash": "0xb02333efbea3eefe276f3a3c30ea4d42fbd272d9d61de65e6bb224c8571f5e97",
+   "seconds": 40
+  },
+  {
+   "id": "M7",
+   "label": "M_spot",
+   "note": "Cowes Esplanade, piling rig and church, May 2010",
+   "verdict": "same_site\": \"yes\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 1,
+    "disagree": 1
+   },
+   "hash": "0x01e58f1e7df7f4bab282613bb378f2e61951609593e66de26aaeae4349689687",
+   "seconds": 38
+  },
+  {
+   "id": "M8",
+   "label": "M_angle",
+   "note": "Cowes Esplanade, hoarding in 2010 then the frame in 2011 (other angle)",
+   "verdict": "same_site\": \"yes\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "hash": "0xc6fce213b4f790389c01ffcb9860968bbcfe7759eb87643f6d9da930e5574ad7",
+   "seconds": 70
+  },
+  {
+   "id": "M9",
+   "label": "M_angle",
+   "note": "Fanshawe Road, the gate then the scaffolded houses (other angle)",
+   "verdict": "same_site\": \"unclear\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "disagree": 2,
+    "agree": 3
+   },
+   "hash": "0x65108688016577c52134737f1556da424c4e2322365a1c8715c9f866d7d4e504",
+   "seconds": 40
+  },
+  {
+   "id": "M10",
+   "label": "M_spot",
+   "note": "Two photographs of the same house under construction (Ted)",
+   "verdict": "same_site\": \"unclear\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "disagree": 1,
+    "agree": 3,
+    "idle": 1
+   },
+   "hash": "0x52dae1491a088e8b7254993f0fec1ca22a361adaf461150dc3aca966c788f672",
+   "seconds": 41
+  },
+  {
+   "id": "M11",
+   "label": "M_spot",
+   "note": "Two photographs of the same residential site (Maina Pat Mbae)",
+   "verdict": "same_site\": \"yes\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "hash": "0xac5d05b88abae9beed7382b9bbb774f84821202bc4e44ce81155ace6f41c2e8f",
+   "seconds": 33
+  },
+  {
+   "id": "M12",
+   "label": "M_angle",
+   "note": "Liversedge cemetery, cleared land then field (other angle)",
+   "verdict": "same_site\": \"no\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "hash": "0x8f7f1d5fb35f7c375d869b9f9e89f8efbd5651a54dd4ce7c46020f61e89d9285",
+   "seconds": 49
+  },
+  {
+   "id": "U1",
+   "label": "U",
+   "note": "Highland building vs Site 33W",
+   "verdict": "same_site\": \"no\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 1,
+    "disagree": 1
+   },
+   "hash": "0x7b66821aa38ac515c677427a7190b21cf23b421b4569ef260e61cfe271c09493",
+   "seconds": 42
+  },
+  {
+   "id": "U2",
+   "label": "U",
+   "note": "Liversedge field vs Cowes container",
+   "verdict": "same_site\": \"no\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "hash": "0xd257189fd3809955ae99e01eaa8e2d3366e3e04ba8ee47accf946e6982dce3ef",
+   "seconds": 36
+  },
+  {
+   "id": "U3",
+   "label": "U",
+   "note": "Highland finished building vs Cowes frame",
+   "verdict": "same_site\": \"no\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "disagree": 1,
+    "idle": 1
+   },
+   "hash": "0xd5a8c8d98b1fa54cdf220a360f8a316ae32ab88a6690aab49b520abd77feb567",
+   "seconds": 33
+  },
+  {
+   "id": "U4",
+   "label": "U",
+   "note": "Liversedge field vs Fanshawe houses",
+   "verdict": "same_site\": \"no\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "idle": 2,
+    "agree": 3
+   },
+   "hash": "0xde92055c41679b7fb659e257d974bc610f098e610c9024cc999493901e7c4aea",
+   "seconds": 24
+  },
+  {
+   "id": "U5",
+   "label": "U",
+   "note": "Liversedge field vs Cowes piling rig",
+   "verdict": "same_site\": \"no\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "idle": 2,
+    "agree": 3
+   },
+   "hash": "0xff17b37122e24bf3a13a3b59f983d99c26a3e0dd59c4c671ec4cd89949d757e4",
+   "seconds": 32
+  },
+  {
+   "id": "U6",
+   "label": "U",
+   "note": "Site 33W vs Fanshawe gate",
+   "verdict": "same_site\": \"no\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "hash": "0x9e2d6ea7c16a842880b725c417e3d6961aebebd7fcb26654b7baca6c34c4e412",
+   "seconds": 32
+  },
+  {
+   "id": "U7",
+   "label": "U",
+   "note": "Liversedge pond field vs Cowes container",
+   "verdict": "same_site\": \"no\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "hash": "0xccd5726181455996cdf80478e2ed26f2fa2877ce91062323d9497e94e8bee372",
+   "seconds": 30
+  },
+  {
+   "id": "U8",
+   "label": "U",
+   "note": "Cowes piling rig vs Site 33W",
+   "verdict": "same_site\": \"no\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "hash": "0x4892a120369d1d9f556435a2f52a6dfa3e18c93d18160463559ebd2f4ec5b463",
+   "seconds": 31
+  },
+  {
+   "id": "U9",
+   "label": "U",
+   "note": "Liversedge field vs Site 33W",
+   "verdict": "same_site\": \"no\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "disagree": 2
+   },
+   "hash": "0xfa83039775388a033494ddbb4c94af3837d49d4b4be0af3843286168bc079a88",
+   "seconds": 31
+  },
+  {
+   "id": "U10",
+   "label": "U_hard",
+   "note": "Two different houses under construction",
+   "verdict": "same_site\": \"unclear\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "hash": "0x7bbe89ef7f1c34aba72961b7c89588e08a2749f161da7fc8bc36d42de77a4c68",
+   "seconds": 30
+  },
+  {
+   "id": "U11",
+   "label": "U_hard",
+   "note": "Two different houses under construction (Kwameghana)",
+   "verdict": "same_site\": \"no\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "idle": 2,
+    "agree": 3
+   },
+   "hash": "0x5d65f62ae880c8c75def2fc0557f05c8206335909f8712837aefe017d3c70b41",
+   "seconds": 57
+  },
+  {
+   "id": "U12",
+   "label": "U_hard",
+   "note": "Roof trusses at two different sites",
+   "verdict": "same_site\": \"no\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "idle": 2,
+    "agree": 3
+   },
+   "hash": "0xb42bebebc4d13438a4315d59eadab97083dbaad56f51f6fa2e2ed6d57182dfa7",
+   "seconds": 31
+  },
+  {
+   "id": "U13",
+   "label": "U_hard",
+   "note": "Two different roofed houses",
+   "verdict": "same_site\": \"no\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "idle": 1,
+    "agree": 3,
+    "disagree": 1
+   },
+   "hash": "0xa1be7adbc3d21b37322a0157095b5c5fb656c6e623c4aafbd7e984ad783b9e65",
+   "seconds": 58
+  },
+  {
+   "id": "U14",
+   "label": "U_hard",
+   "note": "Scaffolded houses at two different sites",
+   "verdict": "same_site\": \"no\"}",
+   "status": "ACCEPTED",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "hash": "0x899b2a71ffd89b18339382cf2ecb0eb2e81dac1a125daa4d1f33e8d48aa20562",
+   "seconds": 37
+  }
+ ]
+}

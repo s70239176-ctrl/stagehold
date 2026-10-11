@@ -14,7 +14,7 @@ Someone pays for a building they cannot stand in front of. Stagehold holds each 
 | Two browser profiles | One for the payer, one for the builder. Accounts are kept per browser, so separate profiles act as two people |
 | A camera | A phone or laptop webcam, with permission granted. The camera requires HTTPS, which Vercel provides |
 | A real wall | Chalk or a marker, and a wall or board that is part of the work. The code must be written on the work itself, large and clear, not on paper held up to the camera |
-| An anchor photograph | One clear picture of the same site, taken beforehand |
+| An anchor photograph | One clear picture of the same site, taken beforehand from where the builder will stand. The validators compare every later photograph with it, so the builder's photographs must show the same place. Keep a photograph of a different site ready to show the check refusing it |
 | A funded job | Create and fund a job ahead of time (steps 3.1 and 3.2) so the live demo starts at the interesting part |
 
 Tips for a reliable run:
@@ -50,10 +50,14 @@ Tips for a reliable run:
 
 1. Choose **Submit to the panel**. The activity bar shows the live consensus stage.
 2. Say while waiting: five validators run different models; a photo tuned to one model does not carry over; text in the picture is scenery, not an instruction.
-3. The result card shows three rows: stage complete, code written on the work, same site as the anchor ("not checked yet" while the site check is off). A pass shows **Accepted**.
+3. The result card shows three rows: stage complete, code written on the work, same site as the anchor (the validators' answer; "not checked yet" only on a job created without the site check). A pass shows **Accepted**.
 4. The job panel then shows the stage **Paid** and the escrow back at 0 GEN once the result is final.
 
 ### 3.6 Optional: show it being strict
+
+Shoot a photograph of a *different site* with the right code on its wall: the validators answer `no` to the same-site question, nothing is paid and the fee is burned.
+
+Or, as below, take a photograph with the code missing or in poor light.
 
 Take a second photograph with the code missing, or in poor light, and submit it. The panel answers "No" or "Unclear" and nothing is paid. One attempt fee is used.
 
