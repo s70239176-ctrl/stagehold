@@ -9,7 +9,7 @@ import { addressFor, loadOrCreateKey, savedWallet, adoptWallet } from "../../lib
 import { AccountBar } from "../../components/AccountBar.tsx";
 import { anchorFromFile } from "../../lib/capture.ts";
 import { deployJob, sendTx } from "../../lib/chain.ts";
-import { STAGES, humanSeconds, stageLabel } from "../../lib/config.ts";
+import { STAGES, humanSeconds, stageLabel, stuckStage } from "../../lib/config.ts";
 import { toB64 } from "../../lib/crypto.ts";
 import { formatGen, parseGen, sumWei } from "../../lib/gen.ts";
 import { useSnapshot } from "../../lib/useSnapshot.ts";
@@ -138,7 +138,10 @@ export default function PayerPage() {
 
   const link = typeof window !== "undefined" && contract ? `${window.location.origin}/builder?job=${contract}` : "";
   const expired = !!snapshot && snapshot.expires_at < Date.now() / 1000;
+  const stuck = stuckStage(snapshot, Date.now() / 1000);
+  const surplus = snapshot?.surplus && snapshot.surplus !== "0" ? BigInt(snapshot.surplus) : 0n;
   const status = snapshot?.status;
+  const closed = status === "DONE" || status === "CANCELLED" || status === "EXPIRED";
 
   return (
     <main className="container">
@@ -258,6 +261,7 @@ export default function PayerPage() {
                     <div className="btn-row">
                       <button className="btn btn-danger btn-sm" disabled={!!busy || snapshot?.settling} onClick={() => void run(cancel)}>Cancel the job (needs the builder too)</button>
                       {expired ? <button className="btn btn-danger btn-sm" disabled={!!busy || snapshot?.settling} onClick={() => void run(expire)}>Expire and refund me</button> : null}
+                      {stuck ? <button className="btn btn-secondary btn-sm" disabled={!!busy} onClick={() => void run(async () => { await tx("Recovering the payment", "recover_settlement", [stuck]); toast.push({ kind: "ok", title: "Recovery sent", body: "The payout is retried; the builder is paid when it lands." }); })}>Payment is late: recover it</button> : null}
                     </div>
                   </div>
                 </div>
@@ -266,6 +270,15 @@ export default function PayerPage() {
               {status && status !== "CREATED" && status !== "ACTIVE" ? (
                 <Notice kind={status === "DONE" ? "ok" : "warn"} title={status === "DONE" ? "All funded stages are paid." : status === "CANCELLED" ? "This job was cancelled." : "This job expired."}>
                   {status === "DONE" ? "Nothing further to do." : "Unpaid stages were refunded to the payer."}
+                </Notice>
+              ) : null}
+
+              {closed && surplus > 0n ? (
+                <Notice kind="info" title="Stray funds are held by this job.">
+                  {formatGen(surplus)} GEN reached the contract through a transaction that failed, so it is in nobody&rsquo;s balance. As the payer you can take it back once pending refunds and payouts have landed.
+                  <div className="btn-row" style={{ marginTop: 10 }}>
+                    <button className="btn btn-secondary btn-sm" disabled={!!busy} onClick={() => void run(async () => { await tx("Reclaiming stray funds", "reclaim_surplus", []); toast.push({ kind: "ok", title: "Stray funds returned to you" }); })}>Reclaim {formatGen(surplus)} GEN</button>
+                  </div>
                 </Notice>
               ) : null}
 

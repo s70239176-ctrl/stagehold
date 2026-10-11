@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Camera, Check } from "../../components/icons.tsx";
 import { Notice } from "../../components/ui.tsx";
 import { assertLive } from "../../lib/liveness.ts";
-import { cameraProblem, encodeFrame, grabFrame, startCamera, thumbnailPng } from "../../lib/capture.ts";
+import { cameraProblem, encodeFrame, frameThumbnail, grabFrame, startCamera } from "../../lib/capture.ts";
 
 /** Try the live camera without a job: shows exactly what a builder's shot looks like after encoding. */
 export default function CameraCheck() {
@@ -42,7 +42,7 @@ export default function CameraCheck() {
     setError("");
     const canvas = grabFrame(video.current);
     const jpeg = await encodeFrame(canvas);
-    const thumb = await thumbnailPng(canvas);
+    const thumb = await frameThumbnail(jpeg);
     if (shot) URL.revokeObjectURL(shot.url);
     setShot({ url: URL.createObjectURL(new Blob([jpeg as BlobPart], { type: "image/jpeg" })), jpeg: jpeg.length, thumb: thumb.length, w: canvas.width, h: canvas.height });
   }

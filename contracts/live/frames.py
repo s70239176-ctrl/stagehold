@@ -62,3 +62,18 @@ def prepare_frame(path):
         else:
             img = img.resize((round(img.size[0] * 0.88), round(img.size[1] * 0.88)), Image.LANCZOS)
             quality = 70
+
+
+def block_thumb(jpeg_bytes):
+    """The thumbnail the web client builds from the frame it submits: the decoded luma averaged in 8x8
+    blocks (edge pixels repeated), as a grayscale PNG. The contract checks it against the JPEG itself."""
+    import numpy as np
+
+    g = np.asarray(Image.open(io.BytesIO(jpeg_bytes)).convert("L"), dtype=np.float32)
+    h, w = g.shape
+    rows, cols = (h + 7) // 8, (w + 7) // 8
+    pad = np.pad(g, ((0, rows * 8 - h), (0, cols * 8 - w)), mode="edge")
+    small = pad.reshape(rows, 8, cols, 8).mean(axis=(1, 3))
+    buf = io.BytesIO()
+    Image.fromarray(np.round(small).astype(np.uint8), "L").save(buf, format="PNG", optimize=True)
+    return buf.getvalue()

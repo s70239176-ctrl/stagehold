@@ -15,6 +15,17 @@ CODE_WORDS = (
     "PEN", "HAT", "EGG", "NET", "BOX", "BAG", "FAN", "JAR", "COIN", "BONE", "CAKE", "TENT",
     "FARM", "SHIP", "CART", "MANGO",
 )
+# Recovery timing. A passing result normally pays through a message that fires at finality. If that
+# message ever fails, the stage would stay SETTLING and lock the job, so anyone may retry it after
+# SETTLE_RETRY and, after SETTLE_FORCE (far past any appeal window), settle it directly.
+# Stray value (sent by a transaction that errored, which keeps its value) may be reclaimed by the payer
+# once the job has been closed for SURPLUS_DELAY. dev_mode jobs use short values so tests can reach them.
+SETTLE_RETRY = 6 * 3600
+SETTLE_FORCE = 7 * 86400
+SURPLUS_DELAY = 3600
+DEV_SETTLE_RETRY = 10
+DEV_SETTLE_FORCE = 45
+DEV_SURPLUS_DELAY = 30
 BURN_ADDRESS = "0x000000000000000000000000000000000000dead"
 
 S_OPEN = "OPEN"
@@ -91,6 +102,7 @@ class Stage:
     request_at: u256
     attempts: u256
     attempt_ok: u256
+    settle_at: u256
 
 
 @allow_storage
@@ -118,6 +130,7 @@ class Stagehold(gl.Contract):
     settling: bool
     payer_cancel: bool
     builder_cancel: bool
+    closed_at: u256
     payer_deposit: u256
     builder_credits: u256
     key_count: u256
@@ -175,6 +188,7 @@ class Stagehold(gl.Contract):
         self.settling = False
         self.payer_cancel = False
         self.builder_cancel = False
+        self.closed_at = u256(0)
         self.payer_deposit = u256(0)
         self.builder_credits = u256(0)
         self.key_count = u256(0)
@@ -216,6 +230,34 @@ class Stagehold(gl.Contract):
                     total += int(st.funded)
                     st.funded = u256(0)
         self._pay(self.payer.as_hex, total)
+
+    def _liabilities(self):
+        """Everything the contract owes: deposits, attempt credits and unpaid stage money."""
+        total = int(self.payer_deposit) + int(self.builder_credits)
+        for stage_id in STAGE_ORDER:
+            if stage_id in self.stages:
+                st = self.stages[stage_id]
+                if st.status != S_PAID:
+                    total += int(st.funded)
+        return total
+
+    def _close(self, status):
+        self.status = status
+        self.closed_at = u256(self._now())
+
+    def _settle(self, stage_id, st):
+        """Pay a stage that passed. The only place a passing stage is paid; idempotent by its status."""
+        amount = int(st.funded)
+        st.status = S_PAID
+        st.funded = u256(0)
+        self.settling = False
+        self._pay(self.builder.as_hex, amount)
+        done = True
+        for sid in STAGE_ORDER:
+            if sid in self.stages and self.stages[sid].status != S_PAID:
+                done = False
+        if done:
+            self._close(J_DONE)
 
     # ----------------------------------------------------------- money in and out
     # Payable methods are deliberately trivial: a transaction that errors KEEPS its attached
@@ -284,7 +326,7 @@ class Stagehold(gl.Contract):
         for sid, amt in zip(stage_ids, amounts):
             self.stages[sid] = Stage(
                 funded=u256(int(amt)), status=S_OPEN, code="", code_deadline=u256(0),
-                request_at=u256(0), attempts=u256(0), attempt_ok=u256(0),
+                request_at=u256(0), attempts=u256(0), attempt_ok=u256(0), settle_at=u256(0),
             )
         self.payer_deposit = u256(0)
         self.status = J_ACTIVE
@@ -442,6 +484,11 @@ class Stagehold(gl.Contract):
         if not verify_shot_signature(pub, hashlib.sha256(message).digest(), sig):
             _fail("capture signature is invalid")
 
+        # 1b. the thumbnail must be a small copy of this very frame (deterministic)
+        same, why, _mad = thumb_matches(jpeg, thumb)
+        if not same:
+            _fail(why)
+
         # 2. site alignment against the stored anchor (deterministic)
         try:
             score = alignment_permille(base64.b64decode(self.anchor_b64), thumb)
@@ -488,6 +535,7 @@ class Stagehold(gl.Contract):
         if passed:
             st.status = S_SETTLING
             st.attempt_ok = st.attempts
+            st.settle_at = u256(now)
             self.settling = True
             # Payment happens only after the decision is final (past the appeal window).
             gl.get_contract_at(_as_address(gl.message_raw["contract_address"])).emit(on="finalized").finalize_stage(
@@ -504,18 +552,46 @@ class Stagehold(gl.Contract):
         st = self._stage(stage_id)
         if st.status != S_SETTLING or int(st.attempt_ok) != int(attempt_no):
             _fail("stage is not settling for this attempt")
-        amount = int(st.funded)
-        st.status = S_PAID
-        st.funded = u256(0)
-        self.settling = False
-        self._pay(self.builder.as_hex, amount)
-        done = True
-        for sid in STAGE_ORDER:
-            if sid in self.stages and self.stages[sid].status != S_PAID:
-                done = False
-        if done:
-            self.status = J_DONE
+        self._settle(stage_id, st)
         return "paid"
+
+    @gl.public.write
+    def recover_settlement(self, stage_id: str) -> str:
+        """If a passing stage is still SETTLING long after it passed (the payout message failed), anyone may
+        retry it, and later settle it directly. It can only pay the builder what the stage holds, and only
+        for a stage the panel already passed, so it is safe for any caller."""
+        st = self._stage(stage_id)
+        if st.status != S_SETTLING:
+            _fail("stage is not settling")
+        age = self._now() - int(st.settle_at)
+        retry = DEV_SETTLE_RETRY if self.dev_mode else SETTLE_RETRY
+        force = DEV_SETTLE_FORCE if self.dev_mode else SETTLE_FORCE
+        if age >= force:
+            self._settle(stage_id, st)
+            return "settled directly"
+        if age >= retry:
+            gl.get_contract_at(_as_address(gl.message_raw["contract_address"])).emit(on="finalized").finalize_stage(
+                stage_id, st.attempt_ok
+            )
+            return "payout retried"
+        _fail("too early to recover; the payout normally lands at finality")
+
+    @gl.public.write
+    def reclaim_surplus(self) -> str:
+        """Value sent by a transaction that then errored stays in the contract but is in nobody's balance.
+        Once the job has been closed for a while (so no refund or payout is still on its way), the payer
+        may take back exactly the unaccounted amount: the balance minus everything the contract owes."""
+        self._only_payer()
+        if self.status not in (J_DONE, J_CANCELLED, J_EXPIRED) or self.settling:
+            _fail("the job is not closed")
+        wait = DEV_SURPLUS_DELAY if self.dev_mode else SURPLUS_DELAY
+        if self._now() < int(self.closed_at) + wait:
+            _fail("too early: wait for pending refunds and payouts to land")
+        surplus = int(self.balance) - self._liabilities()
+        if surplus <= 0:
+            _fail("no unaccounted value")
+        self._pay(self.payer.as_hex, surplus)
+        return str(surplus)
 
     # ----------------------------------------------------------- exits
     @gl.public.write
@@ -531,7 +607,7 @@ class Stagehold(gl.Contract):
             _fail("only the payer or the builder")
         if self.payer_cancel and self.builder_cancel:
             self._refund_unpaid()
-            self.status = J_CANCELLED
+            self._close(J_CANCELLED)
             return "cancelled"
         return "cancel recorded; the other party must also cancel"
 
@@ -542,7 +618,7 @@ class Stagehold(gl.Contract):
         if self._now() < int(self.expires_at):
             _fail("job has not expired")
         self._refund_unpaid()
-        self.status = J_EXPIRED
+        self._close(J_EXPIRED)
         return "expired"
 
     # ----------------------------------------------------------- views
@@ -555,6 +631,7 @@ class Stagehold(gl.Contract):
                 stages[sid] = {
                     "status": st.status, "funded": str(int(st.funded)), "attempts": int(st.attempts),
                     "code": st.code, "code_deadline": int(st.code_deadline), "request_at": int(st.request_at),
+                    "settle_at": int(st.settle_at),
                 }
         return json.dumps({
             "status": self.status, "settling": self.settling,
@@ -564,7 +641,18 @@ class Stagehold(gl.Contract):
             "capture_attested": not self.software_keys, "alignment_enforced": int(self.align_min) > 0,
             "anchor_hash": self.anchor_hash, "keys": int(self.key_count), "stages": stages,
             "payer_deposit": str(int(self.payer_deposit)), "builder_credits": str(int(self.builder_credits)),
+            "closed_at": int(self.closed_at),
+            "surplus": str(max(0, int(self.balance) - self._liabilities())),
+            "settle_retry": DEV_SETTLE_RETRY if self.dev_mode else SETTLE_RETRY,
+            "settle_force": DEV_SETTLE_FORCE if self.dev_mode else SETTLE_FORCE,
+            "surplus_delay": DEV_SURPLUS_DELAY if self.dev_mode else SURPLUS_DELAY,
         })
+
+    @gl.public.view
+    def get_accounting(self) -> str:
+        bal = int(self.balance)
+        owed = self._liabilities()
+        return json.dumps({"balance": str(bal), "liabilities": str(owed), "surplus": str(max(0, bal - owed))})
 
     @gl.public.view
     def get_anchor(self) -> str:

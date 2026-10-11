@@ -8,9 +8,9 @@ import { useToast } from "../../components/Toast.tsx";
 import { addressFor, loadOrCreateKey, savedWallet, adoptWallet } from "../../lib/accounts.ts";
 import { AccountBar } from "../../components/AccountBar.tsx";
 import { assertLive } from "../../lib/liveness.ts";
-import { encodeFrame, grabFrame, startCamera, thumbnailPng } from "../../lib/capture.ts";
+import { encodeFrame, frameThumbnail, grabFrame, startCamera } from "../../lib/capture.ts";
 import { readAttempt, sendTx } from "../../lib/chain.ts";
-import { CAPTURE_NOTICE, humanSeconds, stageLabel } from "../../lib/config.ts";
+import { CAPTURE_NOTICE, humanSeconds, stageLabel, stuckStage } from "../../lib/config.ts";
 import { sha256Hex, shotMessage, signShot, toB64 } from "../../lib/crypto.ts";
 import { getDeviceKey } from "../../lib/devicekey.ts";
 import { parseGen } from "../../lib/gen.ts";
@@ -160,7 +160,7 @@ export default function BuilderPage() {
     setBusy("Preparing the shot");
     const dk = await getDeviceKey(contract, address);
     const jpeg = await encodeFrame(frame.current);
-    const thumb = await thumbnailPng(frame.current);
+    const thumb = await frameThumbnail(jpeg);
     const msg = shotMessage(contract, stage, st.code, st.code_deadline, await sha256Hex(jpeg), await sha256Hex(thumb));
     const sig = await signShot(dk.privateKey, msg);
     const before = st.attempts;
@@ -179,6 +179,7 @@ export default function BuilderPage() {
   const fallbackReady = !!st && !hasCode && st.request_at > 0 && nowS >= st.request_at + window_;
   const live = !!snapshot && snapshot.status === "ACTIVE" && !snapshot.settling;
   const expired = !!snapshot && snapshot.expires_at < nowS;
+  const stuck = stuckStage(snapshot, nowS);
   const stageOptions = snapshot ? Object.entries(snapshot.stages).filter(([, s]) => s.status === "OPEN").map(([id]) => id) : [];
 
   return (
@@ -323,6 +324,7 @@ export default function BuilderPage() {
                 <div className="btn-row">
                   {snapshot.status === "ACTIVE" ? <button className="btn btn-danger btn-sm" disabled={!!busy || snapshot.settling} onClick={() => void run(async () => { await tx("Cancelling", "cancel", []); toast.push({ kind: "ok", title: "Cancellation recorded", body: "Money is refunded only when the payer cancels too." }); })}>Cancel the job</button> : null}
                   {snapshot.status === "ACTIVE" && expired ? <button className="btn btn-danger btn-sm" disabled={!!busy || snapshot.settling} onClick={() => void run(async () => { await tx("Expiring the job", "expire", []); toast.push({ kind: "ok", title: "Job expired", body: "Unpaid stages were refunded to the payer." }); })}>Expire the job</button> : null}
+                  {stuck ? <button className="btn btn-secondary btn-sm" disabled={!!busy} onClick={() => void run(async () => { await tx("Recovering the payment", "recover_settlement", [stuck]); toast.push({ kind: "ok", title: "Recovery sent", body: "If the payout message never landed, it is retried now, and the stage is settled directly after the longer delay." }); })}>Payment is late: recover it</button> : null}
                   {snapshot.builder_credits !== "0" ? <button className="btn btn-secondary btn-sm" disabled={!!busy} onClick={() => void run(async () => { await tx("Withdrawing credits", "withdraw_credits", []); toast.push({ kind: "ok", title: "Unused credits returned" }); })}>Withdraw unused credits</button> : null}
                 </div>
                 <button className="btn btn-ghost btn-sm" style={{ alignSelf: "flex-start" }} onClick={() => { window.localStorage.removeItem(JOB_KEY); setContract(""); setStage(""); retake(); }}>Use a different job</button>

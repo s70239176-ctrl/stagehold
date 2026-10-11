@@ -11,7 +11,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
-from frames import prepare_frame  # noqa: E402
+from frames import block_thumb, prepare_frame  # noqa: E402
 from PIL import Image  # noqa: E402
 
 OUT = os.path.join(HERE, "assets")
@@ -34,4 +34,15 @@ print("anchor thumb", thumb_png(os.path.join(synth, "h1_nocode.jpg"), "anchor.pn
 for tag, src in (("good", "h1_code.jpg"), ("bad", "h1_wrongcode.jpg")):
     jpeg = prepare_frame(os.path.join(synth, src))
     open(os.path.join(OUT, tag + ".jpg"), "wb").write(jpeg)
-    print(tag, "frame", len(jpeg), "bytes; thumb", thumb_png(os.path.join(synth, src), tag + "_thumb.png"), "bytes")
+    th = block_thumb(jpeg)
+    open(os.path.join(OUT, tag + "_thumb.png"), "wb").write(th)
+    print(tag, "frame", len(jpeg), "bytes; thumb", len(th), "bytes")
+
+# A thumbnail of a different scene with the same dimensions as the 1280x720 frames, to test that a thumbnail of
+# another picture is refused.
+from frames import block_thumb as _bt  # noqa: E402
+_other = Image.open(os.path.join(ROOT, "fixtures", "web2", "w2_11_roof_done_candidate.jpg")).convert("RGB").resize((1280, 720), Image.LANCZOS)
+_buf = io.BytesIO()
+_other.save(_buf, format="JPEG", quality=80)
+open(os.path.join(OUT, "other_thumb.png"), "wb").write(_bt(_buf.getvalue()))
+print("other thumb ok")

@@ -5,6 +5,7 @@ visible in an app-signed photo, judged by a panel neither party chose.
 GENERATED FILE. Edit the parts and run `python contracts/build.py`:
   study/prompt.py          stage wording and the exact judge prompt (frozen after the study)
   spikes/attest_verify.py  Android attestation verifier
+  contracts/src/jpegdc.py  JPEG brightness reader; checks the thumbnail matches the frame
   contracts/src/align.py   deterministic site alignment
   contracts/src/body.py    the contract
 
@@ -583,6 +584,307 @@ def verify_shot_signature(leaf_pub, digest, sig_der):
         return False
     return _ecdsa_verify(leaf_pub["curve"], leaf_pub["x"], leaf_pub["y"], digest, sig_der)
 
+# ===== JPEG brightness reader and thumbnail check: contracts/src/jpegdc.py =====
+
+
+
+def _u16(b, i):
+    return (b[i] << 8) | b[i + 1]
+
+
+def _build_huffman(counts, symbols):
+    """Canonical Huffman table: an 8-bit lookahead for short codes and the spec's slow path for the rest."""
+    lut = [None] * 256
+    mincode = [0] * 18
+    maxcode = [-1] * 18
+    valptr = [0] * 18
+    code = 0
+    k = 0
+    for ln in range(1, 17):
+        valptr[ln] = k
+        mincode[ln] = code
+        for _ in range(counts[ln - 1]):
+            if ln <= 8:
+                base = code << (8 - ln)
+                for fill in range(1 << (8 - ln)):
+                    lut[base + fill] = (ln, symbols[k])
+            code += 1
+            k += 1
+        maxcode[ln] = code - 1 if counts[ln - 1] else -1
+        code <<= 1
+    return lut, mincode, maxcode, valptr, symbols
+
+
+def parse_jpeg_dc(data):
+    """Returns (width, height, luma) where luma is a list of rows of 0..255 block averages,
+    ceil(height/8) rows of ceil(width/8) values."""
+    n = len(data)
+    if n < 4 or data[0] != 0xFF or data[1] != 0xD8:
+        raise ValueError("not a JPEG")
+    i = 2
+    qdc = {}
+    huff = {}
+    frame = None
+    restart = 0
+    scan = None
+    while i < n:
+        if data[i] != 0xFF:
+            raise ValueError("bad marker")
+        while i < n and data[i] == 0xFF:
+            i += 1
+        m = data[i]
+        i += 1
+        if m == 0xD9:
+            raise ValueError("no scan before end of image")
+        if m == 0x01 or 0xD0 <= m <= 0xD7:
+            continue
+        ln = _u16(data, i)
+        seg = data[i + 2:i + ln]
+        i += ln
+        if m == 0xDB:
+            p = 0
+            while p < len(seg):
+                pq, tq = seg[p] >> 4, seg[p] & 15
+                if pq == 0:
+                    qdc[tq] = seg[p + 1]
+                    p += 65
+                else:
+                    qdc[tq] = _u16(seg, p + 1)
+                    p += 129
+        elif m in (0xC0, 0xC1):
+            if seg[0] != 8:
+                raise ValueError("only 8-bit JPEG")
+            height, width, nf = _u16(seg, 1), _u16(seg, 3), seg[5]
+            if nf not in (1, 3) or width < 1 or height < 1:
+                raise ValueError("unsupported components")
+            comps = []
+            for c in range(nf):
+                cid, hv, tq = seg[6 + 3 * c], seg[7 + 3 * c], seg[8 + 3 * c]
+                comps.append((cid, hv >> 4, hv & 15, tq))
+            frame = (width, height, comps)
+        elif 0xC2 <= m <= 0xCF and m not in (0xC4, 0xC8, 0xCC):
+            raise ValueError("only baseline JPEG is supported")
+        elif m == 0xC4:
+            p = 0
+            while p < len(seg):
+                tc, th = seg[p] >> 4, seg[p] & 15
+                counts = list(seg[p + 1:p + 17])
+                total = sum(counts)
+                huff[(tc, th)] = _build_huffman(counts, list(seg[p + 17:p + 17 + total]))
+                p += 17 + total
+        elif m == 0xDD:
+            restart = _u16(seg, 0)
+        elif m == 0xDA:
+            if frame is None:
+                raise ValueError("scan before frame")
+            ns = seg[0]
+            sel = []
+            for c in range(ns):
+                sel.append((seg[1 + 2 * c], seg[2 + 2 * c] >> 4, seg[2 + 2 * c] & 15))
+            if ns != len(frame[2]):
+                raise ValueError("multiple scans are not supported")
+            scan = (sel, i)
+            break
+    if scan is None or frame is None:
+        raise ValueError("no scan")
+    width, height, comps = frame
+    sel, start = scan
+    for (cid, td, ta), (fid, _, _, _) in zip(sel, comps):
+        if cid != fid:
+            raise ValueError("scan component order")
+    # entropy-coded data: from `start` to the next marker that is neither a stuffed zero nor RSTn
+    j = start
+    segments = []
+    seg_start = start
+    while j < n - 1:
+        if data[j] == 0xFF:
+            nx = data[j + 1]
+            if nx == 0x00 or nx == 0xFF:
+                j += 2 if nx == 0 else 1
+                continue
+            if 0xD0 <= nx <= 0xD7:
+                segments.append(data[seg_start:j])
+                j += 2
+                seg_start = j
+                continue
+            break
+        j += 1
+    segments.append(data[seg_start:j])
+    segments = [s.replace(b"\xff\x00", b"\xff") + b"\x00\x00\x00\x00\x00" for s in segments]
+
+    if len(comps) == 1:
+        hmax = vmax = 1
+        mcu_w = mcu_h = 8
+        bw_mcu = bh_mcu = 1
+        ncols = (width + 7) // 8
+        nrows = (height + 7) // 8
+        h0, v0 = 1, 1
+    else:
+        h0, v0 = comps[0][1], comps[0][2]
+        hmax = max(c[1] for c in comps)
+        vmax = max(c[2] for c in comps)
+        if h0 != hmax or v0 != vmax or h0 < 1 or v0 < 1:
+            raise ValueError("unsupported sampling")
+        ncols = (width + 8 * hmax - 1) // (8 * hmax)
+        nrows = (height + 8 * vmax - 1) // (8 * vmax)
+    gw = ncols * h0
+    gh = nrows * v0
+    grid = [[0] * gw for _ in range(gh)]
+    q0 = qdc.get(comps[0][3], 1)
+
+    tables = []
+    for (cid, td, ta) in sel:
+        tables.append((huff[(0, td)], huff[(1, ta)]))
+    layout = []
+    for idx, (cid, h, v, tq) in enumerate(comps):
+        if len(comps) == 1:
+            h = v = 1
+        layout.append((h, v))
+
+    mcus_total = ncols * nrows
+    mcu = 0
+    seg_i = 0
+    while mcu < mcus_total:
+        if seg_i >= len(segments):
+            raise ValueError("entropy data ended early")
+        buf = segments[seg_i]
+        blen = len(buf)
+        seg_i += 1
+        count = restart if restart else mcus_total
+        pos = 0
+        acc = 0
+        nbits = 0
+        preds = [0] * len(comps)
+        done = 0
+        while done < count and mcu < mcus_total:
+            my, mx = divmod(mcu, ncols)
+            for ci in range(len(comps)):
+                (dlut, dmin, dmax, dptr, dsyms), (alut, amin, amax, aptr, asyms) = tables[ci]
+                hh, vv = layout[ci]
+                for by in range(vv):
+                    for bx in range(hh):
+                        # ---- DC
+                        while nbits < 16:
+                            if pos + 4 > blen:
+                                raise ValueError("entropy data truncated")
+                            acc = ((acc & ((1 << nbits) - 1)) << 32) | int.from_bytes(buf[pos:pos + 4], "big")
+                            nbits += 32
+                            pos += 4
+                        e = dlut[(acc >> (nbits - 8)) & 0xFF]
+                        if e is not None:
+                            nbits -= e[0]
+                            s = e[1]
+                        else:
+                            ln = 9
+                            code = (acc >> (nbits - 9)) & 0x1FF
+                            while ln <= 16 and (dmax[ln] < 0 or code > dmax[ln]):
+                                ln += 1
+                                code = (acc >> (nbits - ln)) & ((1 << ln) - 1) if ln <= 16 else 0
+                            if ln > 16:
+                                raise ValueError("bad DC code")
+                            s = dsyms[dptr[ln] + code - dmin[ln]]
+                            nbits -= ln
+                        if s:
+                            if s > 11:
+                                raise ValueError("bad DC size")
+                            while nbits < s:
+                                if pos + 4 > blen:
+                                    raise ValueError("entropy data truncated")
+                                acc = ((acc & ((1 << nbits) - 1)) << 32) | int.from_bytes(buf[pos:pos + 4], "big")
+                                nbits += 32
+                                pos += 4
+                            bits = (acc >> (nbits - s)) & ((1 << s) - 1)
+                            nbits -= s
+                            diff = bits if bits >= (1 << (s - 1)) else bits - (1 << s) + 1
+                            preds[ci] += diff
+                        if ci == 0:
+                            grid[my * v0 + by][mx * h0 + bx] = preds[0]
+                        # ---- AC (decoded and discarded: only DC is kept)
+                        k = 1
+                        while k < 64:
+                            while nbits < 16:
+                                if pos + 4 > blen:
+                                    raise ValueError("entropy data truncated")
+                                acc = ((acc & ((1 << nbits) - 1)) << 32) | int.from_bytes(buf[pos:pos + 4], "big")
+                                nbits += 32
+                                pos += 4
+                            e = alut[(acc >> (nbits - 8)) & 0xFF]
+                            if e is not None:
+                                nbits -= e[0]
+                                rs = e[1]
+                            else:
+                                ln = 9
+                                code = (acc >> (nbits - 9)) & 0x1FF
+                                while ln <= 16 and (amax[ln] < 0 or code > amax[ln]):
+                                    ln += 1
+                                    code = (acc >> (nbits - ln)) & ((1 << ln) - 1) if ln <= 16 else 0
+                                if ln > 16:
+                                    raise ValueError("bad AC code")
+                                rs = asyms[aptr[ln] + code - amin[ln]]
+                                nbits -= ln
+                            sz = rs & 15
+                            if sz == 0:
+                                if rs == 0xF0:
+                                    k += 16
+                                    continue
+                                break
+                            k += (rs >> 4) + 1
+                            while nbits < sz:
+                                if pos + 4 > blen:
+                                    raise ValueError("entropy data truncated")
+                                acc = ((acc & ((1 << nbits) - 1)) << 32) | int.from_bytes(buf[pos:pos + 4], "big")
+                                nbits += 32
+                                pos += 4
+                            nbits -= sz
+            mcu += 1
+            done += 1
+    rows = (height + 7) // 8
+    cols = (width + 7) // 8
+    out = []
+    for y in range(rows):
+        row = grid[y]
+        out.append([max(0, min(255, int(round(row[x] * q0 / 8.0 + 128)))) for x in range(cols)])
+    return width, height, out
+
+
+# The alignment thumbnail must be a small copy of the very frame the panel judges. The client builds it by
+# averaging the decoded frame in 8x8 blocks, so it should match the frame's DC image to within a few grey
+# levels; a thumbnail of some other picture is far away. Integer arithmetic only, so every validator agrees.
+MAX_THUMB_MAD_X10 = 40
+
+
+def thumb_matches(jpeg, thumb_png):
+    """Returns (ok, reason, mean_abs_diff_x10)."""
+    import io
+    import numpy as np
+    from PIL import Image
+
+    try:
+        w, h, luma = parse_jpeg_dc(jpeg)
+    except ValueError as e:
+        return False, "frame cannot be read: " + str(e), 0
+    rows = len(luma)
+    cols = len(luma[0])
+    try:
+        img = Image.open(io.BytesIO(thumb_png))
+        img.load()
+        g = img.convert("L")
+    except Exception:  # noqa: BLE001
+        return False, "thumbnail cannot be decoded", 0
+    tw, th = g.size
+    if abs(tw - cols) > 1 or abs(th - rows) > 1:
+        return False, "thumbnail size does not match the frame", 0
+    a = np.asarray(g, dtype=np.int32)
+    b = np.array(luma, dtype=np.int32)
+    r = min(a.shape[0], b.shape[0])
+    c = min(a.shape[1], b.shape[1])
+    a = a[:r, :c]
+    b = b[:r, :c]
+    mad10 = int(np.abs(a - b).sum() * 10 // a.size)
+    if mad10 > MAX_THUMB_MAD_X10:
+        return False, "thumbnail does not match the frame", mad10
+    return True, "", mad10
+
 # ===== alignment: contracts/src/align.py =====
 def _gray(png, side):
     import io
@@ -653,6 +955,17 @@ CODE_WORDS = (
     "PEN", "HAT", "EGG", "NET", "BOX", "BAG", "FAN", "JAR", "COIN", "BONE", "CAKE", "TENT",
     "FARM", "SHIP", "CART", "MANGO",
 )
+# Recovery timing. A passing result normally pays through a message that fires at finality. If that
+# message ever fails, the stage would stay SETTLING and lock the job, so anyone may retry it after
+# SETTLE_RETRY and, after SETTLE_FORCE (far past any appeal window), settle it directly.
+# Stray value (sent by a transaction that errored, which keeps its value) may be reclaimed by the payer
+# once the job has been closed for SURPLUS_DELAY. dev_mode jobs use short values so tests can reach them.
+SETTLE_RETRY = 6 * 3600
+SETTLE_FORCE = 7 * 86400
+SURPLUS_DELAY = 3600
+DEV_SETTLE_RETRY = 10
+DEV_SETTLE_FORCE = 45
+DEV_SURPLUS_DELAY = 30
 BURN_ADDRESS = "0x000000000000000000000000000000000000dead"
 
 S_OPEN = "OPEN"
@@ -729,6 +1042,7 @@ class Stage:
     request_at: u256
     attempts: u256
     attempt_ok: u256
+    settle_at: u256
 
 
 @allow_storage
@@ -756,6 +1070,7 @@ class Stagehold(gl.Contract):
     settling: bool
     payer_cancel: bool
     builder_cancel: bool
+    closed_at: u256
     payer_deposit: u256
     builder_credits: u256
     key_count: u256
@@ -813,6 +1128,7 @@ class Stagehold(gl.Contract):
         self.settling = False
         self.payer_cancel = False
         self.builder_cancel = False
+        self.closed_at = u256(0)
         self.payer_deposit = u256(0)
         self.builder_credits = u256(0)
         self.key_count = u256(0)
@@ -854,6 +1170,34 @@ class Stagehold(gl.Contract):
                     total += int(st.funded)
                     st.funded = u256(0)
         self._pay(self.payer.as_hex, total)
+
+    def _liabilities(self):
+        """Everything the contract owes: deposits, attempt credits and unpaid stage money."""
+        total = int(self.payer_deposit) + int(self.builder_credits)
+        for stage_id in STAGE_ORDER:
+            if stage_id in self.stages:
+                st = self.stages[stage_id]
+                if st.status != S_PAID:
+                    total += int(st.funded)
+        return total
+
+    def _close(self, status):
+        self.status = status
+        self.closed_at = u256(self._now())
+
+    def _settle(self, stage_id, st):
+        """Pay a stage that passed. The only place a passing stage is paid; idempotent by its status."""
+        amount = int(st.funded)
+        st.status = S_PAID
+        st.funded = u256(0)
+        self.settling = False
+        self._pay(self.builder.as_hex, amount)
+        done = True
+        for sid in STAGE_ORDER:
+            if sid in self.stages and self.stages[sid].status != S_PAID:
+                done = False
+        if done:
+            self._close(J_DONE)
 
     # ----------------------------------------------------------- money in and out
     # Payable methods are deliberately trivial: a transaction that errors KEEPS its attached
@@ -922,7 +1266,7 @@ class Stagehold(gl.Contract):
         for sid, amt in zip(stage_ids, amounts):
             self.stages[sid] = Stage(
                 funded=u256(int(amt)), status=S_OPEN, code="", code_deadline=u256(0),
-                request_at=u256(0), attempts=u256(0), attempt_ok=u256(0),
+                request_at=u256(0), attempts=u256(0), attempt_ok=u256(0), settle_at=u256(0),
             )
         self.payer_deposit = u256(0)
         self.status = J_ACTIVE
@@ -1080,6 +1424,11 @@ class Stagehold(gl.Contract):
         if not verify_shot_signature(pub, hashlib.sha256(message).digest(), sig):
             _fail("capture signature is invalid")
 
+        # 1b. the thumbnail must be a small copy of this very frame (deterministic)
+        same, why, _mad = thumb_matches(jpeg, thumb)
+        if not same:
+            _fail(why)
+
         # 2. site alignment against the stored anchor (deterministic)
         try:
             score = alignment_permille(base64.b64decode(self.anchor_b64), thumb)
@@ -1126,6 +1475,7 @@ class Stagehold(gl.Contract):
         if passed:
             st.status = S_SETTLING
             st.attempt_ok = st.attempts
+            st.settle_at = u256(now)
             self.settling = True
             # Payment happens only after the decision is final (past the appeal window).
             gl.get_contract_at(_as_address(gl.message_raw["contract_address"])).emit(on="finalized").finalize_stage(
@@ -1142,18 +1492,46 @@ class Stagehold(gl.Contract):
         st = self._stage(stage_id)
         if st.status != S_SETTLING or int(st.attempt_ok) != int(attempt_no):
             _fail("stage is not settling for this attempt")
-        amount = int(st.funded)
-        st.status = S_PAID
-        st.funded = u256(0)
-        self.settling = False
-        self._pay(self.builder.as_hex, amount)
-        done = True
-        for sid in STAGE_ORDER:
-            if sid in self.stages and self.stages[sid].status != S_PAID:
-                done = False
-        if done:
-            self.status = J_DONE
+        self._settle(stage_id, st)
         return "paid"
+
+    @gl.public.write
+    def recover_settlement(self, stage_id: str) -> str:
+        """If a passing stage is still SETTLING long after it passed (the payout message failed), anyone may
+        retry it, and later settle it directly. It can only pay the builder what the stage holds, and only
+        for a stage the panel already passed, so it is safe for any caller."""
+        st = self._stage(stage_id)
+        if st.status != S_SETTLING:
+            _fail("stage is not settling")
+        age = self._now() - int(st.settle_at)
+        retry = DEV_SETTLE_RETRY if self.dev_mode else SETTLE_RETRY
+        force = DEV_SETTLE_FORCE if self.dev_mode else SETTLE_FORCE
+        if age >= force:
+            self._settle(stage_id, st)
+            return "settled directly"
+        if age >= retry:
+            gl.get_contract_at(_as_address(gl.message_raw["contract_address"])).emit(on="finalized").finalize_stage(
+                stage_id, st.attempt_ok
+            )
+            return "payout retried"
+        _fail("too early to recover; the payout normally lands at finality")
+
+    @gl.public.write
+    def reclaim_surplus(self) -> str:
+        """Value sent by a transaction that then errored stays in the contract but is in nobody's balance.
+        Once the job has been closed for a while (so no refund or payout is still on its way), the payer
+        may take back exactly the unaccounted amount: the balance minus everything the contract owes."""
+        self._only_payer()
+        if self.status not in (J_DONE, J_CANCELLED, J_EXPIRED) or self.settling:
+            _fail("the job is not closed")
+        wait = DEV_SURPLUS_DELAY if self.dev_mode else SURPLUS_DELAY
+        if self._now() < int(self.closed_at) + wait:
+            _fail("too early: wait for pending refunds and payouts to land")
+        surplus = int(self.balance) - self._liabilities()
+        if surplus <= 0:
+            _fail("no unaccounted value")
+        self._pay(self.payer.as_hex, surplus)
+        return str(surplus)
 
     # ----------------------------------------------------------- exits
     @gl.public.write
@@ -1169,7 +1547,7 @@ class Stagehold(gl.Contract):
             _fail("only the payer or the builder")
         if self.payer_cancel and self.builder_cancel:
             self._refund_unpaid()
-            self.status = J_CANCELLED
+            self._close(J_CANCELLED)
             return "cancelled"
         return "cancel recorded; the other party must also cancel"
 
@@ -1180,7 +1558,7 @@ class Stagehold(gl.Contract):
         if self._now() < int(self.expires_at):
             _fail("job has not expired")
         self._refund_unpaid()
-        self.status = J_EXPIRED
+        self._close(J_EXPIRED)
         return "expired"
 
     # ----------------------------------------------------------- views
@@ -1193,6 +1571,7 @@ class Stagehold(gl.Contract):
                 stages[sid] = {
                     "status": st.status, "funded": str(int(st.funded)), "attempts": int(st.attempts),
                     "code": st.code, "code_deadline": int(st.code_deadline), "request_at": int(st.request_at),
+                    "settle_at": int(st.settle_at),
                 }
         return json.dumps({
             "status": self.status, "settling": self.settling,
@@ -1202,7 +1581,18 @@ class Stagehold(gl.Contract):
             "capture_attested": not self.software_keys, "alignment_enforced": int(self.align_min) > 0,
             "anchor_hash": self.anchor_hash, "keys": int(self.key_count), "stages": stages,
             "payer_deposit": str(int(self.payer_deposit)), "builder_credits": str(int(self.builder_credits)),
+            "closed_at": int(self.closed_at),
+            "surplus": str(max(0, int(self.balance) - self._liabilities())),
+            "settle_retry": DEV_SETTLE_RETRY if self.dev_mode else SETTLE_RETRY,
+            "settle_force": DEV_SETTLE_FORCE if self.dev_mode else SETTLE_FORCE,
+            "surplus_delay": DEV_SURPLUS_DELAY if self.dev_mode else SURPLUS_DELAY,
         })
+
+    @gl.public.view
+    def get_accounting(self) -> str:
+        bal = int(self.balance)
+        owed = self._liabilities()
+        return json.dumps({"balance": str(bal), "liabilities": str(owed), "surplus": str(max(0, bal - owed))})
 
     @gl.public.view
     def get_anchor(self) -> str:

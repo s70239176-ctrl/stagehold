@@ -14,7 +14,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
-from frames import chalk, prepare_frame  # noqa: E402
+from frames import block_thumb, chalk, prepare_frame  # noqa: E402
 from PIL import Image  # noqa: E402
 
 code, prefix = sys.argv[1], sys.argv[2]
@@ -26,9 +26,8 @@ for word, y in zip(words, ys):
     img = chalk(img, word, (cx, y), 74)
 tmp = os.path.join(HERE, "assets", prefix + "_src.jpg")
 img.save(tmp, quality=90)
-open(os.path.join(HERE, "assets", prefix + ".jpg"), "wb").write(prepare_frame(tmp))
-buf = io.BytesIO()
-img.convert("L").resize((120, 160), Image.BILINEAR).save(buf, format="PNG", optimize=True)
-open(os.path.join(HERE, "assets", prefix + "_thumb.png"), "wb").write(buf.getvalue())
+jpeg = prepare_frame(tmp)
+open(os.path.join(HERE, "assets", prefix + ".jpg"), "wb").write(jpeg)
+open(os.path.join(HERE, "assets", prefix + "_thumb.png"), "wb").write(block_thumb(jpeg))
 os.remove(tmp)
 print("ok", code, prefix)

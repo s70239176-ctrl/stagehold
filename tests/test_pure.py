@@ -141,5 +141,54 @@ check("signature does not carry to another stage", not vs(pub, hashlib.sha256(ot
 other_job = ns["build_shot_message"]("0x123456", "roof", "K7Q2", 1760000000, "aa" * 32, "bb" * 32)
 check("signature does not carry to another job", not vs(pub, hashlib.sha256(other_job).digest(), sig))
 
+# ---- thumbnail must be a small copy of the judged frame
+import numpy as np
+from PIL import Image as _Image
+
+
+def _scene(seed, w=640, h=360):
+    rnd = np.random.RandomState(seed)
+    x = np.linspace(0, 6, w)[None, :]
+    y = np.linspace(0, 4, h)[:, None]
+    base = 128 + 70 * np.sin(x * (1 + seed % 3)) * np.cos(y * (2 + seed % 2))
+    rgb = np.stack([base + 20 * np.sin(y), base, base - 30 * np.cos(x)], axis=-1) + rnd.normal(0, 6, (h, w, 3))
+    return _Image.fromarray(np.clip(rgb, 0, 255).astype(np.uint8))
+
+
+def _client_thumb(jpeg_bytes):
+    """What the web client does: average the decoded frame's luma in 8x8 blocks (edge pixels replicated)."""
+    g = np.asarray(_Image.open(io.BytesIO(jpeg_bytes)).convert("L"), dtype=np.float32)
+    h, w = g.shape
+    rows, cols = (h + 7) // 8, (w + 7) // 8
+    pad = np.pad(g, ((0, rows * 8 - h), (0, cols * 8 - w)), mode="edge")
+    small = pad.reshape(rows, 8, cols, 8).mean(axis=(1, 3))
+    buf = io.BytesIO()
+    _Image.fromarray(np.round(small).astype(np.uint8), "L").save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def _jpeg(img, q=80):
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=q, subsampling=2)
+    return buf.getvalue()
+
+
+tm = ns["thumb_matches"]
+fa, fb = _jpeg(_scene(1)), _jpeg(_scene(2))
+ok_same, _, mad_same = tm(fa, _client_thumb(fa))
+check("thumbnail of the same frame is accepted", ok_same, f"mean diff x10 = {mad_same}")
+ok_other, why_other, mad_other = tm(fa, _client_thumb(fb))
+check("thumbnail of a different picture is refused", not ok_other, f"mean diff x10 = {mad_other}")
+inv = _Image.fromarray(255 - np.asarray(_Image.open(io.BytesIO(_client_thumb(fa))).convert("L")), "L")
+_b = io.BytesIO()
+inv.save(_b, format="PNG")
+check("an inverted thumbnail is refused", not tm(fa, _b.getvalue())[0])
+_s = io.BytesIO()
+_Image.open(io.BytesIO(_client_thumb(fa))).resize((40, 22)).save(_s, format="PNG")
+check("a thumbnail of the wrong size is refused", not tm(fa, _s.getvalue())[0])
+check("a non-JPEG frame is refused", not tm(b"\x89PNGnot a jpeg", _client_thumb(fa))[0])
+_odd = _jpeg(_scene(3, 333, 251))
+check("odd-sized frame accepted", tm(_odd, _client_thumb(_odd))[0])
+
 print("\nFAILURES:", fails)
 raise SystemExit(1 if fails else 0)

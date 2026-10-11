@@ -37,3 +37,8 @@ __pycache__/
 # superseded design drafts kept locally (they address the author directly and name other projects)
 docs/archive-*/
 spikes/*.log
+
+# evidence run output: pictures derived from a CC BY-SA photograph are not committed
+evidence/results/scenes/
+evidence/node_modules/
+contracts/live/live_hardening_result.json

@@ -13,6 +13,16 @@ export const STAGES: ReadonlyArray<{ id: string; label: string; brief: string }>
   { id: "plaster", label: "One wall plastered", brief: "At least one full wall face plastered over its whole visible face." },
 ];
 
+/** A stage that passed but has not paid for longer than the contract's retry delay: its payout message may have failed. */
+export function stuckStage(snapshot: { stages: Record<string, { status: string; settle_at?: number }>; settle_retry?: number } | null, nowS: number): string {
+  if (!snapshot) return "";
+  const retry = snapshot.settle_retry ?? 6 * 3600;
+  for (const [id, st] of Object.entries(snapshot.stages)) {
+    if (st.status === "SETTLING" && st.settle_at && nowS - st.settle_at >= retry) return id;
+  }
+  return "";
+}
+
 export const stageLabel = (id: string): string => STAGES.find((s) => s.id === id)?.label ?? id;
 
 /** "24 hours", "40 seconds": the job's own payer window, so test jobs are described truthfully. */

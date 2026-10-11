@@ -19,6 +19,7 @@ prompt_src = strip_docstring(open(os.path.join(ROOT, "study", "prompt.py"), enco
 verify_src = strip_docstring(open(os.path.join(ROOT, "spikes", "attest_verify.py"), encoding="utf-8").read())
 verify_src = verify_src.replace("import hashlib\n", "", 1)  # imported once at the top
 align_src = open(os.path.join(HERE, "src", "align.py"), encoding="utf-8").read()
+jpeg_src = strip_docstring(open(os.path.join(HERE, "src", "jpegdc.py"), encoding="utf-8").read())
 body_src = open(os.path.join(HERE, "src", "body.py"), encoding="utf-8").read()
 
 roots = json.load(open(os.path.join(ROOT, "spikes", "testdata", "roots.json")))
@@ -31,6 +32,7 @@ visible in an app-signed photo, judged by a panel neither party chose.
 GENERATED FILE. Edit the parts and run `python contracts/build.py`:
   study/prompt.py          stage wording and the exact judge prompt (frozen after the study)
   spikes/attest_verify.py  Android attestation verifier
+  contracts/src/jpegdc.py  JPEG brightness reader; checks the thumbnail matches the frame
   contracts/src/align.py   deterministic site alignment
   contracts/src/body.py    the contract
 
@@ -51,6 +53,7 @@ parts = [
     header, doc,
     "\n# ===== judge: study/prompt.py =====\n", prompt_src,
     "\n# ===== attestation verifier: spikes/attest_verify.py =====\n", verify_src,
+    "\n# ===== JPEG brightness reader and thumbnail check: contracts/src/jpegdc.py =====\n", jpeg_src,
     "\n# ===== alignment: contracts/src/align.py =====\n", align_src,
     "\n# ===== trust anchors (Google Android Key Attestation roots, fixed at build) =====\n",
     "ROOTS = " + json.dumps(roots_b64) + "\n",

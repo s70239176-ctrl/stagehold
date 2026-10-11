@@ -5,6 +5,7 @@ export interface StageView {
   code: string;
   code_deadline: number;
   request_at: number;
+  settle_at?: number;
 }
 
 /** What `get_snapshot` returns (one batched read keeps us under the hosted RPC's request limit). */
@@ -25,6 +26,11 @@ export interface Snapshot {
   payer_deposit: string;
   builder_credits: string;
   stages: Record<string, StageView>;
+  closed_at?: number;
+  surplus?: string;
+  settle_retry?: number;
+  settle_force?: number;
+  surplus_delay?: number;
 }
 
 /** The three results the builder sees. The model's explanation is never shown. */

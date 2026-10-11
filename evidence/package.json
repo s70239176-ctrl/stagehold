@@ -1,0 +1,7 @@
+{
+  "name": "stagehold-evidence",
+  "private": true,
+  "type": "module",
+  "description": "Runs the Stagehold flows through a deployed frontend in a headless browser and records evidence",
+  "dependencies": { "puppeteer-core": "^24.0.0" }
+}

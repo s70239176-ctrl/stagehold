@@ -50,6 +50,50 @@ export async function encodeFrame(src: HTMLCanvasElement): Promise<Uint8Array> {
   throw new Error("could not fit the frame under the size limit");
 }
 
+/**
+ * The frame's alignment thumbnail, built FROM the encoded JPEG that will be submitted: the decoded luma
+ * averaged in 8x8 blocks (edge pixels repeated), saved as a grayscale PNG of ceil(w/8) x ceil(h/8). The
+ * contract reads the same block averages straight out of the JPEG and refuses a thumbnail that does not
+ * match, so the thumbnail is provably a small copy of the frame the panel judges.
+ */
+export async function frameThumbnail(jpeg: Uint8Array): Promise<Uint8Array> {
+  const bitmap = await createImageBitmap(new Blob([jpeg as BlobPart], { type: "image/jpeg" }));
+  const w = bitmap.width;
+  const h = bitmap.height;
+  const full = canvasOf(w, h);
+  const fctx = full.getContext("2d", { willReadFrequently: true })!;
+  fctx.drawImage(bitmap, 0, 0);
+  const px = fctx.getImageData(0, 0, w, h).data;
+  const cols = Math.ceil(w / 8);
+  const rows = Math.ceil(h / 8);
+  const out = document.createElement("canvas");
+  out.width = cols;
+  out.height = rows;
+  const octx = out.getContext("2d")!;
+  const img = octx.createImageData(cols, rows);
+  for (let by = 0; by < rows; by++) {
+    for (let bx = 0; bx < cols; bx++) {
+      let sum = 0;
+      for (let dy = 0; dy < 8; dy++) {
+        const y = Math.min(h - 1, by * 8 + dy);
+        for (let dx = 0; dx < 8; dx++) {
+          const x = Math.min(w - 1, bx * 8 + dx);
+          const i = (y * w + x) * 4;
+          sum += 0.299 * px[i]! + 0.587 * px[i + 1]! + 0.114 * px[i + 2]!;
+        }
+      }
+      const g = Math.round(sum / 64);
+      const o = (by * cols + bx) * 4;
+      img.data[o] = img.data[o + 1] = img.data[o + 2] = g;
+      img.data[o + 3] = 255;
+    }
+  }
+  octx.putImageData(img, 0, 0);
+  const data = await blobOf(out, "image/png");
+  if (data.length > MAX_THUMB) throw new Error("could not fit the thumbnail under the size limit");
+  return data;
+}
+
 /** Grayscale PNG with a 160 px long edge, at most 30 KB (alignment input, and the payer's anchor). */
 export async function thumbnailPng(src: HTMLCanvasElement): Promise<Uint8Array> {
   let canvas = toLongEdge(src, 160);
