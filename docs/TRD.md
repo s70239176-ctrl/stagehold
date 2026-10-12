@@ -8,7 +8,7 @@ The contract source is generated: `python contracts/build.py` assembles `contrac
 
 ```
 Browser (Next.js) ── genlayer-js ──▶  Stagehold job contract (one per job)
-  payer page / builder page            ├─ deterministic: money, codes, windows, signature, alignment, state
+  payer page / builder page            ├─ deterministic: money, codes, windows, signature, thumbnail, state
   live camera, WebCrypto signing       └─ non-deterministic: vision panel (validators with different models)
 ```
 
@@ -95,7 +95,7 @@ Constructor: `(builder, fee, expires_in, app_package, app_sig_digest_hex, align_
 
 There is no release method.
 
-The snapshot includes `software_keys`, `capture_attested`, `dev_mode`, `payer_window`, `alignment_enforced`, balances and every stage. Clients must display `capture_attested` and `alignment_enforced`.
+The snapshot includes `software_keys`, `capture_attested`, `dev_mode`, `payer_window`, `site_check`, `alignment_enforced`, `anchor_kind`, `surplus`, the recovery delays, balances and every stage. Clients must display `capture_attested` and whether the site is checked (`site_check` or `alignment_enforced`).
 
 ## 5. Money model
 

@@ -19,7 +19,7 @@
 
 - **Hosted app:** https://stagehold-cr.vercel.app/ (Vercel, root directory `web`; no environment variables).
 - **Walkthrough:** [docs/DEMO.md](docs/DEMO.md) is a four-minute script with preparation steps and a troubleshooting table.
-- **Demo video:** [YouTube](https://youtu.be/kOrpqyhMxDE) (also in the repo: [docs/demo/stagehold-demo.mp4](docs/demo/stagehold-demo.mp4)), 1 minute 50 seconds with voiceover, the full flow on Studionet: create and fund a job, issue a code, register a key, take a live-camera frame, panel verdict, payout. It was recorded in a headless browser with every transaction real; the camera was a stand-in feed of a test photograph with the code drawn on it, and waits between steps are sped up.
+- **Demo video:** [YouTube](https://youtu.be/kOrpqyhMxDE) (also in the repo: [docs/demo/stagehold-demo.mp4](docs/demo/stagehold-demo.mp4)), 1 minute 50 seconds with voiceover, the full flow on Studionet (recorded before the site check and the plain-send payout fix; the flow shown is unchanged): create and fund a job, issue a code, register a key, take a live-camera frame, panel verdict, payout. It was recorded in a headless browser with every transaction real; the camera was a stand-in feed of a test photograph with the code drawn on it, and waits between steps are sped up.
 
 ## Contract details
 
@@ -30,9 +30,9 @@
 | Chain ID | `61999` |
 | Explorer | https://explorer-studio.genlayer.com |
 | Contract source | [`contracts/stagehold.py`](contracts/stagehold.py) (generated; see below) |
-| Reference deployment | [`0x9E5C1faF632A8a080B94d9c22d33C88f579534D1`](https://explorer-studio.genlayer.com/address/0x9E5C1faF632A8a080B94d9c22d33C88f579534D1): a completed job from the end-to-end evidence run (a different site refused by the validators, the same site later passed, stage paid), made through the deployed site with the current contract |
+| Reference deployment | [`0xadF3e0C0AD4B59baEbB770471eC66586862ea17b`](https://explorer-studio.genlayer.com/address/0xadF3e0C0AD4B59baEbB770471eC66586862ea17b): a completed job (state `DONE`) from the latest end-to-end evidence run, made through the deployed site with the current contract: a photograph of a different site was refused by the validators, a later photograph of the same site passed, and the builder's account was paid. Its transactions are listed under *site* in [docs/EVIDENCE.md](docs/EVIDENCE.md) |
 
-**One contract per job.** Stagehold deploys a fresh contract for every job, from the payer page, so there is no single address the app depends on. The reference deployment above is a finished job with throwaway accounts, kept so reviewers can read a live contract and its history on the explorer, for example `get_snapshot` and `get_attempt`. To run the real flow, create your own job in the app; the job's address appears in the job panel and in the builder link (`/builder?job=0x…`).
+**One contract per job.** Stagehold deploys a fresh contract for every job, from the payer page, so there is no single address the app depends on. The reference deployment above is the only address in this repository's documentation that is meant to be opened: a finished job with throwaway accounts, kept so reviewers can read a live contract and its history on the explorer, for example `get_snapshot` and `get_attempt`. Other job addresses appear only inside [docs/EVIDENCE.md](docs/EVIDENCE.md), next to the flow that created them. To run the real flow, create your own job in the app; the job's address appears in the job panel and in the builder link (`/builder?job=0x…`).
 
 Main methods (20 in all): `deposit`, `fund`, `issue_code`, `request_code`, `trigger_fallback_code`, `register_software_key`, `register_device`, `deposit_credits`, `submit` (the judged call), `finalize_stage` (pays after finality), `recover_settlement` (retries or settles a payout that did not land), `cancel`, `expire`, `withdraw_deposit`, `withdraw_credits`, `reclaim_surplus` (returns stray value to the payer), and the views `get_snapshot`, `get_accounting`, `get_anchor`, `get_attempt`.
 
@@ -47,7 +47,7 @@ Main methods (20 in all): `deposit`, `fund`, `issue_code`, `request_code`, `trig
 5. **Pay at finality.** An accepted stage locks the escrow; when the result is final, the contract pays the builder through a self-call. There is no release button. If that payout message ever fails, the stage cannot stay locked: anyone can retry it after a delay and settle it directly after a longer one, and a late or duplicate payout message pays nothing (see [docs/TRD.md](docs/TRD.md) section 5.1).
 6. **Exits.** The job can be cancelled only by both parties, or expired after its deadline, which refunds unpaid stages to the payer. Value that reached the contract through a failed transaction is reported as surplus, and the payer can reclaim exactly that once the job is closed.
 
-**Result structure.** The builder sees three results, never the model's explanation: stage complete, code visible, and same site (shown as "not checked yet" while the alignment check is off). Details are in [docs/PRD.md](docs/PRD.md) and [docs/TRD.md](docs/TRD.md).
+**Result structure.** The builder sees three results, never the model's explanation: stage complete, code visible, and same site (the validators' answer, or "not checked yet" for a job created without the site check). Details are in [docs/PRD.md](docs/PRD.md) and [docs/TRD.md](docs/TRD.md).
 
 ## Tech stack
 
@@ -62,11 +62,13 @@ Main methods (20 in all): `deposit`, `fund`, `issue_code`, `request_code`, `trig
 
 | Path | What it is |
 |---|---|
-| `contracts/stagehold.py` | The job contract. **Generated** by `python contracts/build.py` from `study/prompt.py`, `spikes/attest_verify.py`, `contracts/src/align.py` and `contracts/src/body.py`. |
+| `contracts/stagehold.py` | The job contract. **Generated** by `python contracts/build.py` from `study/prompt.py`, `spikes/attest_verify.py`, `contracts/src/jpegdc.py`, `contracts/src/align.py` and `contracts/src/body.py`. |
 | `web/` | The Next.js app: landing page, payer console, builder console, camera check. See [web/README.md](web/README.md). |
 | `study/` | The stage wording and judging prompt that the contract sends to the validators (`prompt.py`). |
-| `docs/` | [PRD](docs/PRD.md), [TRD](docs/TRD.md), [SDLC](docs/SDLC.md), [demo guide](docs/DEMO.md), screenshots. |
-| `tests/` | Local tests of the contract's pure functions. |
+| `docs/` | [PRD](docs/PRD.md), [TRD](docs/TRD.md), [SDLC](docs/SDLC.md), [trust model](docs/TRUST_MODEL.md), [evidence](docs/EVIDENCE.md), [site verification](docs/SITE_VERIFICATION.md), [photograph tests](docs/PHOTO_TESTS.md), [demo guide](docs/DEMO.md), screenshots. |
+| `evidence/` | The harness that drives the deployed site in a headless browser and writes `docs/EVIDENCE.md`. |
+| `calibration/` | The 26 photograph pairs and eleven photograph cases, with their results. |
+| `tests/` | In-process tests of the contract: pure functions, the JPEG reader, and the money and recovery paths. |
 | `contracts/live/` | Scripts that run the contract live on Studionet with throwaway keys. |
 | `app/` | The paused Android attested-capture app (draft, uncompiled) and tested offline tools. |
 | `spikes/` | Feasibility probes of the contract runtime and the pure-Python attestation verifier. |
@@ -94,6 +96,8 @@ No private keys belong in this repository or in these variables. The app makes t
 
 ```bash
 python tests/test_pure.py            # needs: pip install pillow numpy cryptography
+python tests/test_recovery.py        # payout recovery, surplus, plain-send payouts
+python tests/test_jpegdc.py          # the pure-Python JPEG reader
 cd web && npm test                   # signatures, message format, word list, wallet, liveness
 cd web && npm run typecheck && npm run build
 genvm-lint check contracts/stagehold.py
@@ -139,18 +143,17 @@ Screenshots are narrow browser-pane captures of the landing page; the drawings a
 - **Studionet is a development network.** Its GEN has no market value, judged transactions take 30 to 110 seconds, and the RPC allows about 30 requests a minute and 500 an hour per client. Payouts, refunds and fee burns are plain sends: on Studionet the first version (`emit_transfer`) ended in a GenVM error and never reached ordinary accounts; the contract now uses the SDK's EVM-style plain send, and payouts, refunds, burns and reclaims are verified arriving in the recipients' accounts ([docs/evidence/transfer_recipients.md](docs/evidence/transfer_recipients.md)).
 - **Wallet connection** (EIP-1193) is optional. It was checked with a mock wallet and then by the maintainer with a real browser wallet; the GenLayer Snap is not requested and other wallets are untested. The default is a throwaway browser key.
 - **Attestation revocation** is not handled; trust roots are fixed at deploy. The Android app is a draft that has never been compiled or run on a device.
-- Real handwritten codes and real photographs of sites have not been tried on-chain yet.
 
 ## Future roadmap
 
 | Phase | Content |
 |---|---|
 | Next | A real-wall trial on Studionet with real photographs and handwritten codes |
-| Then | Compile and run the attested Android capture app; register a real device chain; calibrate the site alignment check |
-| Later | Test on Testnet Bradbury; a capped, single-template escrow with a stable asset that listens for finality; iOS capture |
+| Then | Compile and run the attested Android capture app; register a real device chain |
+| Later | A capped, single-template escrow with a stable asset that listens for finality, with payouts re-checked on the target network; iOS capture |
 
 ## Credits and licenses
 
-- Photographs used in tests were fetched from Wikimedia Commons (CC BY-SA or public domain); sources and authors are in `fixtures/web/ATTRIBUTION.csv` and `fixtures/web2/ATTRIBUTION.csv`. The photos themselves are not in this repository.
+- Photographs used in tests were fetched from Wikimedia Commons (CC BY-SA or public domain); sources and authors are in the `ATTRIBUTION.csv` files under `fixtures/` (`web`, `web2`, `sites`). The photos themselves are not in this repository.
 - `spikes/testdata/` holds Google's published Android attestation roots and sample chains from the Apache-2.0 `android/keyattestation` project, used only to test the verifier.
 - This repository's own code is MIT licensed (see [LICENSE](LICENSE)). Third-party material keeps its own license.

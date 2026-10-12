@@ -1,6 +1,6 @@
 # Stagehold web app (GenLayer Studionet)
 
-Two mobile pages on top of `contracts/stagehold.py`: **/payer** (create the job, fund a stage with an anchor photo, issue a code) and **/builder** (register this browser, add attempt credits, request or unlock a code, take a live camera frame, submit). The builder sees three results, never the model's explanation: stage complete, code visible, same site (shown as "not checked yet" while alignment is off).
+Two mobile pages on top of `contracts/stagehold.py`: **/payer** (create the job, fund a stage with an anchor photo, issue a code) and **/builder** (register this browser, add attempt credits, request or unlock a code, take a live camera frame, submit). The builder sees three results, never the model's explanation: stage complete, code visible, same site (the validators' answer, or "not checked yet" for a job created without the site check).
 
 > **WEB MODE has no capture authenticity.** A browser cannot prove a photo came from a live camera, so a gallery photo or a generated image cannot be told apart from a live frame. Every web job is created with `software_keys`, the snapshot says `capture_attested: false`, the builder's capture card shows a notice, the job panel shows a "Capture not verified" badge, and every page footer says so. Studionet GEN has no market value. The attested Android app is paused on the roadmap as a **mainnet gate**.
 
@@ -27,11 +27,11 @@ Amounts are entered and shown in GEN (18 decimals). Accounts are throwaway keys 
 
 ## What was verified
 
-- `typecheck`, `build` and 12 unit tests pass (the DER signature conversion is checked against Node's verifier, the shot message and the word list against the contract, and GEN parsing and formatting round-trip exactly to 18 decimals).
-- The interface was redesigned (landing page, payer and builder consoles, shared design system) and a full job was run through the new pages in GEN amounts: 0.5 GEN funded, a code issued, a key registered, 0.1 GEN of credits added, a frame signed and submitted, the panel accepted it, and the job completed with escrow back to 0 GEN. The layout was checked down to a 296 px viewport with no horizontal overflow.
-- **End to end in a browser, on Studionet (Oct 2026):** the payer page deployed a job, funded the roof stage with an uploaded anchor (19 KB thumbnail stored on-chain) and issued the code; the builder page registered a browser-made key, added credits, took a frame, signed it and submitted; the panel answered yes / yes; the stage went to `PAID` and the job to `DONE`. The browser pane has no camera, so a stand-in camera stream was installed in the page context for that test (no app code was changed for it).
+- `typecheck`, `build` and 18 unit tests pass (the DER signature conversion is checked against Node's verifier, the shot message and the word list against the contract, and GEN parsing and formatting round-trip exactly to 18 decimals).
+- The interface was redesigned (landing page, payer and builder consoles, shared design system) and checked down to a 296 px viewport with no horizontal overflow.
+- **End to end in a browser, on Studionet:** every flow (pass, payout recovery, cancel, expiry, silent-payer fallback, site check, disclosure) is run through the deployed pages in a headless browser, with every transaction, the validators' votes, the GenVM result and the account balances recorded in [../docs/EVIDENCE.md](../docs/EVIDENCE.md). The browser pane has no camera, so a stand-in camera stream carrying a genuine photograph with simulated lettering is installed in the page context (no app code is changed for it).
 
-## Also verified through the pages (test jobs with short windows)
+## Also verified through the pages (test jobs with short windows; repeated in the evidence run above)
 
 A payer-page checkbox creates a clearly labelled **test job** (the contract's `dev_mode`) with a short fallback window and a short expiry; every page shows a "test job: short windows" tag for it. With those:
 

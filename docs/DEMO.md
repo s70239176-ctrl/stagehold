@@ -72,7 +72,7 @@ State these plainly; they are part of the design, not an afterthought.
 - The web version takes live-camera frames only and refuses software cameras and frozen feeds, but it cannot prove the camera is genuine: a virtual camera that adds noise still passes. An attested mobile capture app is planned before real value is used.
 - A photograph shows what is visible. It says nothing about title to the land, materials used or what is inside a wall.
 - Studionet is a development network. Its GEN has no market value. The payout arrives in the builder's account (the contract pays with a plain send; see `docs/evidence/transfer_recipients.md`).
-- The panel has been tried on a small set of photographs and synthetic edits with a single model family. A study with real photographs and several model families is the next gate.
+- The validators have judged eleven genuine photographs (ten as expected) and 26 site pairs; the codes in those tests are simulated lettering, and true handwriting on a real wall has not been tried ([PHOTO_TESTS.md](PHOTO_TESTS.md), [SITE_VERIFICATION.md](SITE_VERIFICATION.md)).
 - Accounts are throwaway browser keys by default. A browser wallet can be connected from the account bar; it works with the wallet the maintainer tried, other wallets are untested. Studionet GEN has no market value.
 
 ## 5. If something goes wrong
